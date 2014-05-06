@@ -1,0 +1,107 @@
+    <div class="row">
+         <!--Sidebar content-->
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                <li class="active"><a href="#">Sensorinos</a></li>
+                <li><a href="#/charts">Graphs</a></li>
+            </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+            <h1 class="page-header">Dashboard</h1>
+            <div class="row">
+             Search: <input ng-model="query">
+            <!--Body content-->
+                list:
+                <ul class="sensorinos">
+                <li ng-repeat="sens in sensorinos | filter:query ">
+                    <a href="#/sensorino/{{sens.address}}">{{sens.name}}</a>
+                        {{sens.description}} with address {{sens.address}} is at {{sens.location}}
+                    <button ng-click="deleteSensorino(sens.address)">delete {{sens.name}}/{{sens.address}}</button>
+                </li>
+                </ul>
+            </div>
+        </div>
+
+         <div id="debug">
+    </div>
+
+
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+            <button type="button" class="btn btn-default btn-lg" ng-click="activateForm()">
+                 <span class="glyphicon glyphicon-plus"></span>
+            </button>
+        </div>
+
+    </div>
+
+
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" id="createSensorinoForm" name="createSensorinoForm" ng-show="showForm">
+        <form class="form-horizontal">
+            <fieldset>
+
+            <!-- Form Name -->
+            <legend>Create new Sensorino</legend>
+
+            <!-- Text input-->
+            <div class="control-group">
+              <label class="control-label" for="sname">Name</label>
+              <div class="controls">
+                <input id="sname" name="sname" placeholder="only alphanum"
+                    class="input-xlarge" required="" type="text" ng-model="sensorino.name">
+                <p class="help-block">What name do you want to use to refer to this sensorino</p>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="control-group">
+              <label class="control-label" for="saddress">Address</label>
+              <div class="controls">
+                <input id="sname" name="saddress" placeholder="only num"
+                    class="input-xlarge" required="" type="text" ng-model="sensorino.address">
+                <p class="help-block">What is the address of this beast ?</p>
+              </div>
+            </div>
+
+
+            <!-- Text input-->
+            <div class="control-group">
+              <label class="control-label" for="slocation">Location</label>
+              <div class="controls">
+                <input id="slocation" name="slocation" placeholder="SomePlace"
+                    class="input-xlarge" type="text" ng-model="sensorino.location">
+                <p class="help-block">Where is this sensorino ? Kitchen, Garage ...</p>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="control-group">
+              <label class="control-label" for="sdescription">Description</label>
+              <div class="controls">
+                <input id="sdescription" name="sdescription" 
+                    class="input-xlarge" required="" type="text" ng-model="sensorino.description">
+                <p class="help-block">Tell some more about this little puppy</p>
+              </div>
+            </div>
+
+            <!-- Text input-->
+    <!-- no owner for now
+            <div class="control-group">
+              <label class="control-label" for="sowner">Owner</label>
+              <div class="controls">
+                <input id="sowner" name="sowner" 
+                    class="input-xlarge" type="text" ng-model="sensorino.owner" >
+                <p class="help-block">Tell some more about this little puppy</p>
+              </div>
+            </div>
+    -->
+
+            </fieldset>
+
+        <button ng-click="createSensorino(sensorino)">SAVE</button>
+        </form>
+
+        <pre>form = {{sensorino | json}}</pre>
+        <pre>master = {{master | json}}</pre>
+
+    </div>
+

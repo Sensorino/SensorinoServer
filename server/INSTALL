@@ -1,0 +1,14 @@
+
+# Install mosquitto
+
+Install a recent version of mosquitto library
+follow instructions at http://mosquitto.org/download/
+
+you can install repository or download directly, under debian:
+
+wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key
+sudo apt-key add mosquitto-repo.gpg.key
+cd /etc/apt/sources.list.d/
+wget http://repo.mosquitto.org/debian/mosquitto-wheezy.list
+apt-get update
+apt-get install mosquitto-clients mosquitto python-mosquitto

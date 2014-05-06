@@ -1,0 +1,6 @@
+To install lighttpd-1.4.33 with mod_websocket patch:
+
+download code from https://github.com/nori0428/mod_websocket
+donwload lighttpd-1.4.33 (most recent version of lighttpd supported by the patch at the time of writting
+follow instructions at https://github.com/nori0428/mod_websocket/blob/master/INSTALL
+

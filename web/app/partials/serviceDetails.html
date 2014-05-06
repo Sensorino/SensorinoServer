@@ -1,0 +1,43 @@
+<div class="row">
+     <!--Sidebar content-->
+    <div class="col-sm-3 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+            <li><a href="#">Sensorinos</a></li>
+            <li class="active"><a href="#/charts">Graphs</a></li>
+        </ul>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <h1>{{service.name}} ({{service.dataType}})</h1>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <h3 class="page-header">Service details</h3>
+        <div class="row">
+            This service is {{service.type}}
+        </div>
+    </div>
+
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <h3 class="page-header">State</h3>
+        <div class="row">
+
+        <!-- Button -->
+            <div class="control-group">
+              <div class="controls">
+                <div  ng-repeat="state in validStates">
+                    <label>
+                        <input type="radio" value="{{state}}" name="selectedState"
+                         ng-model="$parent.currentState" ng-change=''>
+                        state: {{state}}
+                    </label>
+                </div>
+              </div>
+              <tt>st = {{currentState | json}}</tt><br/>
+            </div>
+
+        </div>
+    </div>
+
+    
+</div>
+
+

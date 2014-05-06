@@ -1,0 +1,26 @@
+<div class="row">
+     <!--Sidebar content-->
+    <div class="col-sm-3 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+            <li><a href="#">Sensorinos</a></li>
+            <li class="active"><a href="#/charts">Graphs</a></li>
+        </ul>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <h1>{{service.name}} ({{service.dataType}})</h1>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <h3 class="page-header">Data logs</h3>
+        <div class="row">
+        <!--Body content-->
+            <ul class="sensorinos">
+            <li ng-repeat="log in logs ">
+                {{log.timestamp}} ==>  {{log.value}}
+
+            </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+

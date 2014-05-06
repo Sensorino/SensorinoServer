@@ -1,0 +1,24 @@
+Main rest server:
+The main server uses sqlite to store info about services, it also sends data on mqtt server
+It's implemented as a rest server (flask+restful extension)
+
+Gateway:
+The gateway is a simple python program that will communicate with the base on the serial port
+and translate orders from/to main server over rest or mqtt
+
+Web UI:
+The webui is written in angularjs with boostrap 
+there is also a mosquitto.js library 
+
+
+Running the server:
+-Start mosquitto
+-Start lighttpd with start script:  httpd-proxy/start.sh 
+
+Running gateway:
+launch serialGateway.py, you can pass serial port name if needed
+
+
+Note:
+You can edit sensorino.ini to choose server location and ports
+

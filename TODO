@@ -1,0 +1,21 @@
+backend:
+
+coreEngine.py: raise proper exception in core engine to allow rest server to return proper http status
++sensorino.py : force id at sensorino creation
+
+mqttThread.py: add a mecanism to handle reconnection
+
+create ghost tables to display unknown services appearing on the network
+(like publishing from unknown stuff)
+
+
+
+ui:
+
+-Service creation 
+-General navigation
+-generate graphs
+
+
+
+

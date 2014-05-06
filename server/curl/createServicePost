@@ -1,0 +1,2 @@
+curl -X POST -H "Content-Type: application/json" -d '{ "name":"thermometer", "dataType":"TEMP"}' http://127.0.0.1:5000/sensorino/1/dataServices
+

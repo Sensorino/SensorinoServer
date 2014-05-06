@@ -1,0 +1,10 @@
+{
+    "PublishMessage": {
+        "service": 3,
+        "address": [1,2,3,4],
+        "timestamp" : 123456,
+        "data": {
+            "value": 13
+        }
+    }
+}

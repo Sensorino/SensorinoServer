@@ -1,0 +1,2 @@
+curl -X POST -H "Content-Type: application/json" -d '{"address":"11211", "name":"myFirstSensorino", "description":"a cool one"}' http://127.0.0.1/sensorinos
+

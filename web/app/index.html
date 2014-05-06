@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" ng-app="sensorinoApp">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Sensorino Central</title>
+    <link rel="stylesheet" href="css/btrp.min.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src='js/jquery.min.js'></script>
+    <script src="lib/angular/angular.js"></script>
+    <script src="lib/angular/angular-route.js"></script>
+    <script src="js/lodash.js"></script>
+    <script src="js/restangular.js"></script>
+    <script src='js/d3.min.js'></script>
+    <script src='js/angular-charts.min.js'></script> 
+    <script src="js/controllers.js"></script>
+    <script src='js/mosquitto-1.1.js'></script>
+
+</head>
+
+<body>
+
+     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+          <div class="container-fluid">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">Sensorino Central</a>
+            </div>
+            <div class="navbar-collapse collapse">
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">Documentation</a></li>
+                <li><a href="#">About</a></li>
+              </ul>
+            </div>
+        </div>
+    </div>
+
+    <div ng-view class="container-fluid"></div>      
+
+</body>
+</html>

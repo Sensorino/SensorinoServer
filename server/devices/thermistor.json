@@ -1,0 +1,13 @@
+{
+	"name":"thermistor",
+	"package":"2legs",
+	"dataType":"temperature",
+	"unit":"celcius",
+	"range": {
+		"min":-50,
+		"max":150
+	},
+	"resolution": 0.1,
+	"precision": -1,
+	"power": null
+}

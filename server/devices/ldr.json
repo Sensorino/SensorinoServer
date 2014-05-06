@@ -1,0 +1,13 @@
+{
+	"name":"ldr",
+	"package":"2legs",
+	"dataType":"temperature",
+	"unit":"percent",
+	"range": {
+		"min":0,
+		"max":100
+	},
+	"resolution": 1,
+	"precision": -1,
+	"power": null
+}

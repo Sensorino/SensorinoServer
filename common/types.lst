@@ -1,0 +1,98 @@
+
+
+/*
+ACCELERATION 
+AMOUNT
+ANGLE 
+ANGULAR VELOCITY
+AREA
+RADIOACTIVITY
+ELECTRICAL CAPACITANCE
+ELECTRICAL RESISTANCE
+ELECTRIC CURRENT
+ENERGY
+FORCE
+FREQUENCY
+ILLUMINANCE
+INDUCTANCE
+LENGTH
+LUMINOUS FLUX
+LUMINOUS INTENSITY
+MAGNETIC FIELD STRENGTH
+MASS
+POWER
+PRESSURE
+RELATIVE HUMIDITY
+SPEED
+TEMPERATURE
+TIME
+VOLTAGE
+VOLUME
+*/
+
+typedef enum DataType {
+    ACCELERATION            = 1,
+    AMOUNT                  = 2,
+    ANGLE                   = 3,
+    ANGULAR VELOCITY        = 4,
+    AREA                    = 5,
+    RADIOACTIVITY           = 6,
+    ELECTRICAL CAPACITANCE  = 7,
+    ELECTRICAL RESISTANCE   = 8,
+    ELECTRIC CURRENT        = 9,
+    ENERGY                  = 10,
+    FORCE                   = 11,
+    FREQUENCY               = 12,
+    ILLUMINANCE             = 13,
+    INDUCTANCE              = 14,
+    LENGTH                  = 15,
+    LUMINOUS FLUX           = 16,
+    LUMINOUS INTENSITY      = 17,
+    MAGNETIC FIELD STRENGTH = 18,
+    MASS                    = 19,
+    POWER                   = 20,
+    PRESSURE                = 21,
+    RELATIVE HUMIDITY       = 22,
+    SPEED                   = 23,
+    TEMPERATURE             = 24,
+    TIME                    = 25,
+    VOLTAGE                 = 26,
+    VOLUME                  = 27
+
+} MessageType;
+
+
+
+class Message{
+    char payload[20];
+    char len;
+
+}
+
+
+const char extendedType=00011111b;
+
+
+void Message::addFloatValue(type t, float value){
+    // Type
+    payload[len++]=extendedType; // extended type
+    payload[len++]=t;
+
+    // Len
+    payload[len++]=size_of(float);
+
+    // Value
+    payload[len]=value;
+    len+=size_of(float);
+
+}
+
+
+void Message::addTemperature(float temp){
+    addFloatValue(type.Temperature, temp);
+}
+
+void Message::addTemperature(int temp){
+    addFloatValue(type.Temperature, (float)temp);
+}
+

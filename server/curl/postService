@@ -1,0 +1,2 @@
+curl -X POST -H "Content-Type: application/json" -d '{"name":"someTestService", "dataType":"Foo"}' http://127.0.0.1/sensorino/1/dataServices
+

@@ -1,0 +1,3 @@
+git clone https://github.com/nori0428/mod_websocket
+wget http://download.lighttpd.net/lighttpd/releases-1.4.x/lighttpd-1.4.33.tar.bz2
+tar xvjf lighttpd-1.4.33.tar.bz2 
