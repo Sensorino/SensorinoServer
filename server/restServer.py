@@ -8,6 +8,7 @@ from flask.ext.restful.utils import cors
 import threading
 import logging
 import time
+
 import coreEngine
 import common
 import sensorino
@@ -101,7 +102,6 @@ class ServicesBySensorino(restful.Resource):
 class ServiceBySensorino(restful.Resource):
     """ Handle service details, update and delete"""
     def get(self, address, serviceId):
-        print "HEY"
         try:
             service=coreEngine.findSensorino(saddress=address).getService(serviceId)
             print "now transform service to data"
@@ -120,24 +120,46 @@ class ServiceBySensorino(restful.Resource):
 
 
 
-class PublishDataServiceBySensorino(restful.Resource):
-    """ Handle publish data listing and posting"""
+class ChannelsByService(restful.Resource):
+    """Handle channels list"""
     def get(self, address, serviceId):
         try:
             sensorinoId=int(address)
-            return coreEngine.findSensorino(saddress=address).getService(serviceId).getLogs()
+            return coreEngine.findSensorino(saddress=address).getService(serviceId).channels
+        except SensorinoNotFoundError:
+            abort(404, message="no such sensorino")
+        except ServiceNotFoundError:
+            abort(404, message="no such service")
+
+    def post(self, address, serviceId):
+        rparse = reqparse.RequestParser()
+        rparse.add_argument('channels', type=str, required=True, help="Need an array of dataType", location="json")
+        args =rparse.parse_args()
+        try: 
+            sensorinoId=int(address)
+            return coreEngine.findSensorino(saddress=address).getService(serviceId).setChannels(args["channels"])
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
             abort(404, message="no such service")
 
 
+class Channel(restful.Resource):
+    def delete(self, address, serviceId, channelId):
+        try:
+            coreEngine.deleteChannel(self, address, serviceId, channelId)
+        except SensorinoNotFoundError:
+            abort(404, message="no such sensorino")
+
+    #def get(self, address, serviceId, channelId):
+    #def put(self, address):
+
     def post(self, address, serviceId):
         rparse = reqparse.RequestParser()
         rparse.add_argument('data', type=str, required=True, help="are you loging data ?", location="json")
         args =rparse.parse_args()
         try: 
-            coreEngine.publish(address, serviceId, args['data'])
+            coreEngine.publish(address, serviceId, channelId,  args['data'])
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -148,9 +170,11 @@ class PublishDataServiceBySensorino(restful.Resource):
 
 api.add_resource(RestSensorinoList, '/sensorinos')
 api.add_resource(RestSensorino, '/sensorinos/<string:address>')
-api.add_resource(ServicesBySensorino, '/sensorinos/<string:address>/dataServices')
-api.add_resource(ServiceBySensorino, '/sensorinos/<string:address>/dataServices/<int:serviceId>')
-api.add_resource(PublishDataServiceBySensorino, '/sensorinos/<string:address>/dataServices/<int:serviceId>/data')
+api.add_resource(ServicesBySensorino, '/sensorinos/<string:address>/services')
+api.add_resource(ServiceBySensorino, '/sensorinos/<string:address>/services/<int:serviceId>')
+api.add_resource(ChannelsByService, '/sensorinos/<string:address>/services/<int:serviceId>/channels')
+api.add_resource(Channel, '/sensorinos/<string:address>/services/<int:serviceId>/channel/<int:channelId>')
+#api.add_resource(PublishDataServiceByChannel, '/sensorinos/<string:address>/services/<int:serviceId>/channel/<int:channelId>/data')
 
 
 

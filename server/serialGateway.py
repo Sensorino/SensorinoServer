@@ -1,15 +1,15 @@
-import logging
-import serial
 import protocol
+import mqttThread
+import common
+
+import datetime
 import httplib2
 import json
+import logging
+import serial
 import sys
 import time
-import datetime
-import time
-import common
 import traceback
-import mqttThread
 
 
 # create logger with 'spam_application'
@@ -28,7 +28,6 @@ ch.setFormatter(formatter)
 
 # add ch to logger
 logger.addHandler(ch)
-
 
 
 
@@ -66,11 +65,12 @@ class SerialGateway:
             logger.warn("unknown mqtt channel")
 
 
-    def on_publish(prot, address, serviceID, serviceInstanceID, data):
+    def on_publish(prot, address, serviceID, data):
         """protocol has decoded a publish event on (serial port), we should talk to main server"""
         try:
 #            response, content = http.request( baseUrl+"/address/"+str(serviceID)+"/"+str(serviceInstanceID), 'POST', json.dumps(data), headers=content_type_header)
             print("post to rest")
+            if 
         except Exception, e:
             print(e)
             traceback.print_stack()
@@ -123,10 +123,29 @@ class FakeSerial:
     
     currentMessage=0   
     messages=[
-        '{ "set":     { "address": [1,2,3,4], "serviceID": 2, "serviceInstanceID": 0, "state": { "value": "on" } } }',
-        '{ "publish": "fuck"}',
-        '{ "publish": { "address": [1,2,3,4], "serviceID": 2, "serviceInstanceID": 0, "data":  { "value": "14" } } }',
-        '{ "request": { "address": [1,2,3,4], "serviceID": 2, "serviceInstanceID": 0 } }'
+
+        ## publish
+
+        #service list from sensorino with address 10
+        { "from": 10, "to": 0, "type": "publish", "serviceId": [ 0, 1 ] },
+        # service dataType / description from a service 1 on sensorino with address 10
+        { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
+        # publish from a service 1 of type switch on sensorino with address 10
+        { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
+
+        ## request 
+
+        # base ask service list to service manager service on sensorino with address 10        
+        { "from": 0, "to": 10, "type": "request", "serviceId": 0 },
+        # base ask service description of service 1 on sensorino with address 10
+        { "from": 0, "to": 10, "type": "request", "serviceId": 1, "dataType": "dataType" },
+        # base ask service 1 on sensorino with address 10 to publish
+        { "from": 0, "to": 10, "type": "request", "serviceId": 1, "dataType": "switch" },
+
+        ## set
+        # base set service 1 on sensorino with address 10 switch state to True
+        { "from": 0, "to": 10, "type": "set", "serviceId": 1, "switch": True }
+
     ]
 
 

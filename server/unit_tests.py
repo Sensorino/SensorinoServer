@@ -36,6 +36,8 @@ class TestX(unittest.TestCase):
     def tearDown(self):
         pass
 
+
+
     def test_sensorino_creation_deletion(self):
         self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
         self.assertIsNone(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
@@ -47,20 +49,33 @@ class TestX(unittest.TestCase):
         with self.assertRaises(SensorinoNotFoundError) as err:
             self.engine.findSensorino( saddress="666")
 
+    def test_sensorino_nameless_creation_deletion(self):
+        self.assertTrue(self.engine.addSensorino(sensorino.Sensorino(None, "1234")))
+        self.assertIsNone(self.engine.addSensorino(sensorino.Sensorino(None, "1234")))
+        sens=self.engine.findSensorino(saddress="1234")
+        self.assertIsNotNone(sens)
+        self.assertTrue(self.engine.delSensorino(sens.address))
+
     def test_createService(self):
         self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
         sens=self.engine.findSensorino(saddress="1234")
-        self.assertTrue(self.engine.createDataService(sens.address, "testService", "Foo"))
+        self.assertTrue(self.engine.createDataService(sens.address, "testService" ))
         services=self.engine.getServicesBySensorino(sens.address)
+        s=None
         for service in services: 
             if "testService" == service.name:
-                self.assertTrue(self.engine.deleteService(sens.address, service.serviceId))
-                break 
-        # now, publish
-        with self.assertRaises(ServiceNotFoundError) as err:
-            self.engine.publish(sens.address, 666, "789")
-        self.assertTrue(self.engine.publish(sens.address, service.serviceId, "789"))
+                s=service
+                break
+        self.assertIsNotNone(s)
+        
+        # now create channels
+        s.setChannels(['Foo']) 
 
+        print s.channels
+
+        return s.logData("test");
+
+       
 
     #def test_temperature_publish(self):
         

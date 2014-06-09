@@ -85,9 +85,9 @@ class Core:
             return None
         return s.services 
 
-    def createDataService(self, saddress, name, dataType ):
+    def createDataService(self, saddress, name ):
         s = self.findSensorino(saddress=saddress)
-        service=sensorino.DataService(name, dataType, s.address)
+        service=sensorino.DataService(name, s.address)
         if (False==s.registerService(service)):
             return False
         status=service.save()
@@ -108,7 +108,7 @@ class Core:
         
     # TODO generate exception on failures, this will allow rest server to translate them into http status
     
-    def publish(self, saddress, serviceId, data):
+    def publish(self, saddress, serviceId, data, channelId=None):
         """publish some data on dataService with given id"""
         sens = None
         try:
@@ -125,17 +125,17 @@ class Core:
             payload=  { "service": {"saddress": saddress, "serviceId":serviceId}}
             logger.warn(self.mqtt.mqttc.publish("discover", json.dumps(payload) ))
             raise ServiceNotFoundError("unable to publish on unknown service, mqttt clients will receive some notice")
-        return service.logData(data)
+        return service.logData(data, channelId)
 
     def setState(self, saddress, serviceId, state):
         """to setState we should send command and wait for the publish back"""
         sens=self.findSensorino(saddress=saddress)
         if (sens==None):
-            logger.warn("logging data from unknown sensorino is not allowed (yet)")
+            logger.warn("unknown sensorino")
             return None
         service=sens.getService(serviceId)
         if (service==None):
-            logger.warn("logging data from unknown sensorino is not allowed (yet)")
+            logger.warn("unknown service")
             return None
         
         self.mqtt.mqttc.publish("commands",  { "set" : {"saddress":sadress, "serviceID":serviceId, "state":state}})
@@ -146,11 +146,11 @@ class Core:
         """will launch a request to service"""
         sens=self.findSensorino(saddress=saddress)
         if (sens==None):
-            logger.warn("logging data from unknown sensorino is not allowed (yet)")
+            logger.warn("unknown sensorino")
             return None
         service=sens.getService(serviceId)
         if (service==None):
-            logger.warn("logging data from unknown sensorino is not allowed (yet)")
+            logger.warn("unknown service")
             return None
         self.mqtt.mqttc.publish("commands",  json.dumps({ "request": { "saddress":sens.address, "serviceID":service.serviceId, "serviceInstanceID":service.sid}}))
         return True
