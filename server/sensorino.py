@@ -90,7 +90,7 @@ class Sensorino:
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
             c = conn.cursor()
-            status=c.execute("DELETE FROM sensorinos WHERE address=? ",( self.address))
+            status=c.execute("DELETE FROM sensorinos WHERE address=? ",( self.address,))
             conn.commit()
         except Exception as e:
             print(e)
@@ -284,46 +284,23 @@ class DataService(Service):
             channels = c.fetchall()
             for channel in channels:
                 self.channels[channel["channelId"]]=channel["dataType"]
-            print self.channels
         except Exception as e:
             print(e)
             # Roll back any change if something goes wrong
             conn.rollback()
 
+        conn.close()
 
-    def logData(self, channelId, value):
-        status=None
-        try:
-            conn = sqlite3.connect(common.Config.getDbFilename())
-            c = conn.cursor()
-
-            if (None==channelId):
-                if (len(self.channels)==1):
-                    channelIddict.itervalues().next()
-                else:
-                    logger.debug("unable to log on multiple channel service without channelId")
-                    return False
-            
-
-            logger.debug("Log data on sensorino"+str(self.saddress)+" service: "+self.name+" chanID: "+channelId+" data:"+value)
-
-            status=c.execute("INSERT INTO dataServicesLog (saddress, serviceId, channelId, value, timestamp) VALUES (?,?,?,?,?) ",
-                     (self.saddress, self.serviceId, channelId, value, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-            conn.commit()
-        except Exception as e:
-            print(e)
-            # Roll back any change if something goes wrong
-            conn.rollback()
-        return status
 
     def loadChannels(self):
         status = None
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
+            conn.row_factory = common.dict_factory
             c = conn.cursor()
-            logger.debug("Load channels for service")
+            logger.debug("Load channels for service "+str(self.serviceId))
 
-            c.execute("SELECT * from dataChannels WHERE serviceId=? ORDER BY channelId", (self.serviceId))
+            status = c.execute("SELECT * from dataChannels WHERE serviceId=? ORDER BY channelId", (str(self.serviceId),))
             self.channels = c.fetchall()
 
         except Exception as e:
@@ -339,29 +316,70 @@ class DataService(Service):
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
             c = conn.cursor()
+
             logger.debug("clear channels for service "+str(self.serviceId))
-            c.execute("DELETE FROM dataChannels WHERE serviceId=?", (str(self.serviceId)))
+            c.execute("DELETE FROM dataChannels WHERE serviceId=?", (str(self.serviceId),))
 
-            logger.debug("insert channels for service")
+            logger.debug("insert "+str(len(dataTypes))+" channels in service "+str(self.serviceId))
             for dataType in dataTypes:
-                status=c.execute("INSERT INTO dataChannels (serviceId, dataType) VALUES (?,?)",
-                    self.serviceId, dataType)
+                status=c.execute("INSERT INTO dataChannels (serviceId, dataType) VALUES (?,?)", ( self.serviceId, dataType))
 
+            c.execute("SELECT * from dataChannels ")
+            rows=c.fetchall()
+            conn.commit()
         except Exception as e:
             print(e)
             # Roll back any change if something goes wrong
             conn.rollback()
+
+        conn.close()
+
         return self.loadChannels()
 
+
+    def logData(self, channelId, value):
+
+        logger.debug("log data on service:"+str(self.serviceId)+"/chan:"+str(channelId))
+
+        if (len(self.channels)==0):
+            logger.debug("unable to log on service without channel")
+            return False
+
+        status=None
+        try:
+            conn = sqlite3.connect(common.Config.getDbFilename())
+            c = conn.cursor()
+
+            if (None==channelId):
+                if (len(self.channels)==1):
+                    channelId=self.channels[0]["channelId"]
+                else:
+                    logger.debug("unable to log on multiple channel service without channelId")
+                    return False
             
+
+            logger.debug("Log data on sensorino"+str(self.saddress)+" service: "+self.name+" chanID: "+str(channelId)+" data:"+str(value))
+
+            status=c.execute("INSERT INTO dataServicesLog (saddress, serviceId, channelId, value, timestamp) VALUES (?,?,?,?,?) ",
+                     (self.saddress, self.serviceId, channelId, value, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn.commit()
+        except Exception as e:
+            print(e)
+            # Roll back any change if something goes wrong
+            conn.rollback()
+
+        conn.close()
+        return status
+           
 
     def getLogs(self, channelId):
         conn = sqlite3.connect(common.Config.getDbFilename())
         conn.row_factory = common.dict_factory
         c = conn.cursor()
 
-        c.execute("SELECT value, timestamp FROM dataServicesLog WHERE serviceId=:serviceId AND channelId=:channelId", self.toData())
+        c.execute("SELECT value, timestamp FROM dataServicesLog WHERE serviceId=:serviceId AND channelId=:channelId", { 'serviceId': self.serviceId, 'channelId': channelId})
         rows = c.fetchall()
+        conn.close()
         return rows
 
 
@@ -386,6 +404,8 @@ class ActuatorService(Service):
             print(e)
             # Roll back any change if something goes wrong
             conn.rollback()
+
+        conn.close()
         return status
 
  

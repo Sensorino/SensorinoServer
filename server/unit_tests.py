@@ -51,12 +51,12 @@ class TestX(unittest.TestCase):
 
     def test_sensorino_nameless_creation_deletion(self):
         self.assertTrue(self.engine.addSensorino(sensorino.Sensorino(None, "1234")))
-        self.assertIsNone(self.engine.addSensorino(sensorino.Sensorino(None, "1234")))
         sens=self.engine.findSensorino(saddress="1234")
         self.assertIsNotNone(sens)
         self.assertTrue(self.engine.delSensorino(sens.address))
 
-    def test_createService(self):
+
+    def test_Service(self):
         self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
         sens=self.engine.findSensorino(saddress="1234")
         self.assertTrue(self.engine.createDataService(sens.address, "testService" ))
@@ -71,13 +71,19 @@ class TestX(unittest.TestCase):
         # now create channels
         s.setChannels(['Foo']) 
 
-        print s.channels
+        # publish 
+        s.logData(None, "test")
+        s.logData(None, "test")
+        s.logData(None, "test")
+        s.logData(None, "test")
+        s.logData(None, "test")
 
-        return s.logData("test");
+        # getData back
+        data=s.getLogs(1)
+        self.assertTrue(5==len(data))
 
        
 
-    #def test_temperature_publish(self):
         
           
 
