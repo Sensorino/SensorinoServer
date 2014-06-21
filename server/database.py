@@ -29,12 +29,17 @@ class DbCreator:
 
         c.execute('''DROP TABLE IF EXISTS dataChannels''')
         c.execute('''CREATE TABLE dataChannels
-                    (channelId INTEGER PRIMARY KEY, serviceId INTEGER, dataType TEXT)''')
+                    (channelId INTEGER PRIMARY KEY, serviceId INTEGER, dataType TEXT, position INTEGER)''')
 
 
         c.execute('''DROP TABLE IF EXISTS dataServicesLog''')
         c.execute('''CREATE TABLE dataServicesLog
                      (saddress TEXT, serviceId INTEGER, channelId INTEGER, value TEXT, timestamp TEXT)''')
+
+
+        c.execute('''DROP TABLE IF EXISTS rules''')
+        c.execute('''CREATE TABLE rules
+                     (saddress TEXT, condition TEXT, action TEXT, name TEXT)''')
 
 
         # Save (commit) the changes
