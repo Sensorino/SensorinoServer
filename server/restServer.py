@@ -33,10 +33,11 @@ class RestSensorinoList(restful.Resource):
     def post(self):
         rparse = reqparse.RequestParser()   
         rparse.add_argument('name', type=str, required=True, help="your sensorino needs a name", location="json")
+        rparse.add_argument('address', type=str, required=True, help="your sensorino needs a name", location="json")
         rparse.add_argument('description', type=str, required=True, help="Please give a brief description for your sensorino", location="json")
         args = rparse.parse_args()
         try:
-            sens=sensorino.Sensorino( args['name'],  args['description'])
+            sens=sensorino.Sensorino( args['name'],  args['address'], args['description'])
             coreEngine.addSensorino(sens)
             print "let's save sensorino" 
             sens.save()
@@ -87,15 +88,14 @@ class ServicesBySensorino(restful.Resource):
     def post(self, address):
         rparse = reqparse.RequestParser()
         rparse.add_argument('name', type=str, required=True, help="your service needs a name", location="json")
-        rparse.add_argument('dataType', type=str, required=True, help="What kind of data ?", location="json")
-        rparse.add_argument('location', type=str, required=False, help="Where is your device ?", location="json")
+      #  rparse.add_argument('location', type=str, required=False, help="Where is your device ?", location="json")
         args =rparse.parse_args()
         
         try:
-            coreEngine.createDataService( address, args['name'], args['dataType'])
-            return 201
+            service=coreEngine.createDataService( address, args['name'])
+            return service.toData()
         except SensorinoNotFoundError:
-            abort(404, message="no such sensorino")
+            abort(404, message="no such sensorino "+address)
 
 
 

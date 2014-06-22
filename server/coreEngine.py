@@ -78,6 +78,7 @@ class Core:
     def findSensorino(self, saddress=None):
         """return sensorino with given address or id"""
         for sens in self.sensorinos:
+            logger.debug("compare "+sens.address+" with "+saddress)
             if (saddress!=None and sens.address==saddress):
                 return sens
         raise SensorinoNotFoundError("missing")
@@ -91,12 +92,13 @@ class Core:
         return s.services 
 
     def createDataService(self, saddress, name ):
+        logger.debug("search ssenso "+saddress)
         s = self.findSensorino(saddress=saddress)
         service=sensorino.DataService(name, s.address)
         if (False==s.registerService(service)):
             return False
         status=service.save()
-        return True
+        return service
 
     def deleteService(self, saddress, serviceId):
         s = self.findSensorino(saddress=saddress)

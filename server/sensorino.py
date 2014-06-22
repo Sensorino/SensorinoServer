@@ -121,41 +121,6 @@ class Sensorino:
             
 
 
-
-class Device:
-    def __init__(self, name, location, did):
-        self.name=name
-        self.did=did
-        self.location=location
-        self.type=None
-
-    def toData(self):
-        return {
-            'name': self.name,
-            'did': self.did,
-            'location': self.location.toData(),
-            'type': self.type
-        }
-
-
-class DataDevice(Device):
-    def __init__(self, name, dataType, location=None, did=None):
-        Device.__init__( self, name, location, did)
-        self.type="data"
-        self.dataType=dataType
-
-    def toData(self):
-        data=super(Device, self).toData()
-        data['dataType']=self.dataType
-        return data
-
-class ActuatorDevice(Device):
-    def __init__(self, name, did, location, actuatorType):
-        Device.__init__(self, name, location, did)
-        self.type="action"
-        self.actuatorType=actuatorType
-
-
 class Location:
     def __init__(self, name, position="DEFAULT"):
         self.name=name

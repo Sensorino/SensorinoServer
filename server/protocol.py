@@ -97,6 +97,16 @@ class Protocol:
                     
 
                     print "now declare service"
+                    service={
+                        "name": "new service",
+                        "dataType": message['dataType'],
+                        "instanceId":message['serviceId']
+                    }
+                    response, content = http.request(
+                        baseUrl+"/sensorinos/"+message['from']+"/services",
+                        'POST',
+                        json.dumps(service),
+                        headers)
                 else
                     # publish from a service 1 of type switch on sensorino with address 10
                     # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
