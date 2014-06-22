@@ -33,16 +33,16 @@ class RestSensorinoList(restful.Resource):
     def post(self):
         rparse = reqparse.RequestParser()   
         rparse.add_argument('name', type=str, required=True, help="your sensorino needs a name", location="json")
-        rparse.add_argument('description', type=str, required=True, help="Please give a brief description for your sensorin", location="json")
+        rparse.add_argument('description', type=str, required=True, help="Please give a brief description for your sensorino", location="json")
         args = rparse.parse_args()
         try:
             sens=sensorino.Sensorino( args['name'],  args['description'])
+            coreEngine.addSensorino(sens)
+            print "let's save sensorino" 
             sens.save()
-            if (coreEngine.addSensorino(sens)==False):
-                return 500
             return sens.address
         except Exception as e:
-            return 500
+            return e.message, 500
 
 
 class RestSensorino(restful.Resource):
@@ -57,7 +57,7 @@ class RestSensorino(restful.Resource):
     def put(self, address):
         rparse = reqparse.RequestParser()   
         rparse.add_argument('name', type=str, required=True, help="your sensorino needs a name", location="json")
-        rparse.add_argument('description', type=str, required=True, help="Please give a brief description for your sensorin", location="json")
+        rparse.add_argument('description', type=str, required=True, help="Please give a brief description for your sensorino", location="json")
 
         args = rparse.parse_args()
         try:
@@ -173,7 +173,7 @@ api.add_resource(RestSensorino, '/sensorinos/<string:address>')
 api.add_resource(ServicesBySensorino, '/sensorinos/<string:address>/services')
 api.add_resource(ServiceBySensorino, '/sensorinos/<string:address>/services/<int:serviceId>')
 api.add_resource(ChannelsByService, '/sensorinos/<string:address>/services/<int:serviceId>/channels')
-api.add_resource(Channel, '/sensorinos/<string:address>/services/<int:serviceId>/channel/<int:channelId>')
+api.add_resource(Channel, '/sensorinos/<string:address>/services/<int:serviceId>/channels/<int:channelId>')
 #api.add_resource(PublishDataServiceByChannel, '/sensorinos/<string:address>/services/<int:serviceId>/channel/<int:channelId>/data')
 
 

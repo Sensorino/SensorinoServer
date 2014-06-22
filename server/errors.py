@@ -15,4 +15,9 @@ class FailToSaveSensorinoError(Error):
     def __init__(self, message):
         self.message = message
 
+class FailToAddSensorinoError(Error):
+    def __init__(self, message):
+        self.message = message
+
+   
    

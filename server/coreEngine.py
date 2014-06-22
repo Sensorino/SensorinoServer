@@ -30,6 +30,7 @@ logger.addHandler(ch)
 
 class Core:
     def __init__(self):
+        self._sensorinosLoaded=False
         self.sensorinos=[]
         self.loadSensorinos()
         self.mqtt = None
@@ -41,20 +42,24 @@ class Core:
 
     def loadSensorinos(self):
         """load all sensorinos stored in db """
+        if (self._sensorinosLoaded):
+            logger.debug("won't reload sensorinos")
+            return
         for senso in sensorino.Sensorino.loadAllSensorinos():
             senso.loadServices()
             self.addSensorino(senso)
+        self._sensorinosLoaded=True
         
 
     def addSensorino(self, sensorino):
         """create and add a new sensorino unless there is an id/address conflict """
         if (sensorino in self.sensorinos):
-            logger.debug("not adding sensorino, already present")
-            return None
+            raise FailToAddSensorinoError("not adding sensorino, already exists")
+        logger.debug("we already have "+str(len(self.sensorinos)))
         for sens in self.sensorinos:
+            logger.debug(sens.address+" vs "+sensorino.address)
             if ( sens.address == sensorino.address):
-                logger.warn("unable to add your sensorino, id or address duplication")
-                return None
+                raise FailToAddSensorinoError("not adding sensorino, address duplicated")
         self.sensorinos.append(sensorino)
         return True
 

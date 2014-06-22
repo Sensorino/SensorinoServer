@@ -31,7 +31,7 @@ logger.addHandler(ch)
 httplib2.debuglevel     = 0
 http                    = httplib2.Http()
 content_type_header     = "application/json"
-headers = {'Content-type': 'application/json'}
+headers                 = {'Content-type': 'application/json'}
 baseUrl                 = common.Config.getRestServer()+"/sensorinos/"
 
 
@@ -76,24 +76,44 @@ class Protocol:
                 
                 #service list from sensorino with address 10
                 # { "from": 10, "to": 0, "type": "publish", "serviceId": [ 0, 1 ] },
-        # service dataType / description from a service 1 on sensorino with address 10
-#        { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
-        # publish from a service 1 of type switch on sensorino with address 10
- #       { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
 
                 if ( "serviceId" in message and message["serviceId"] is list):
                     print "now declare sensorino";
-                    sens={address: message["from"]}
-                    response, content = http.request( baseUrl+"/"+message["from"]+"services", 'POST', json.dumps(sens), headers=content_type_header)
-                    /sensorinos
-                    response, content = http.request( baseUrl+"/"+message["from"]+"services", 'GET', headers=content_type_header)
-                    for serviceId in message["serviceId"]:
+                    sens={
+                        'address'   : message["from"],
+                        'name'      : 'new sensorino',
+                        'description' : 'new sensorino'
+                    }
+                    response, content = http.request( 
+                        baseUrl+"/sensorinos",
+                        'POST',
+                        json.dumps(sens),
+                        headers)
         
                         
                 elif( "dataType" in message):
+                    # service dataType / description from a service 1 on sensorino with address 10
+                    # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
+                    
+
                     print "now declare service"
                 else
+                    # publish from a service 1 of type switch on sensorino with address 10
+                    # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
+
                     print "data publish"
+
+                    data={
+                        'data'   : message["from"],
+                        'name'      : 'new sensorino',
+                        'description' : 'new sensorino'
+                    }
+                    response, content = http.request( 
+                        baseUrl+"/sensorinos/services/"+message["serviceId"]+"/channels",
+                        'POST',
+                        json.dumps(sens),
+                        headers)
+
 
                 return True
 

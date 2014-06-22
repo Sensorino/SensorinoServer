@@ -255,9 +255,9 @@ class Service():
         for srow in rows:
             service=None
             if("DATA" == srow["stype"]):
-                service=DataService(srow['name'], srow['dataType'], saddress, srow['serviceId'])
+                service=DataService(srow['name'],  saddress, srow['serviceId'])
             elif("ACTUATOR" == srow["stype"]):
-                service=ActuatorService(srow['name'], srow['dataType'], saddress, srow['serviceId'])
+                service=ActuatorService(srow['name'],  saddress, srow['serviceId'])
             if(None==service):
                 logger.error("failed to load service for sensorino :"+srow)
             else:
