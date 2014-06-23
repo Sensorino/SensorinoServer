@@ -94,12 +94,13 @@ class Protocol:
                 elif( "dataType" in message):
                     # service dataType / description from a service 1 on sensorino with address 10
                     # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
+                    # or
+                    # { "dataType": [ "temperature", "temperature", "switch", "switch", ], "count": [ 2, 2 ] } 
                     
 
                     print "now declare service"
                     service={
                         "name": "new service",
-                        "dataType": message['dataType'],
                         "instanceId":message['serviceId']
                     }
                     response, content = http.request(
@@ -107,6 +108,23 @@ class Protocol:
                         'POST',
                         json.dumps(service),
                         headers)
+
+                    print "youp di doup, now channels"
+                    position=0
+                    for dataType in message['dataType']:
+                        channel={
+                            "position": pos,
+                            "dataType": dataType,
+                            "publisher": pos<=message['count'][0],
+                            "settable": pos<=message['count'][1],
+                        }
+                        response, content = http.request(
+                            baseUrl+"/sensorinos/"+message['from']+"/services/"+service['instanceId']+"/channels",
+                            'POST',
+                            json.dumps(channel),
+                            headers)
+                        position=position+1
+
                 else
                     # publish from a service 1 of type switch on sensorino with address 10
                     # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
