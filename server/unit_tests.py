@@ -84,7 +84,8 @@ class TestX(unittest.TestCase):
         data=s.getLogs(1)
         self.assertTrue(5==len(data))
 
-       
+
+#TODO add update service test       
 
         
           

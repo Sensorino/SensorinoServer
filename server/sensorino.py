@@ -45,8 +45,9 @@ class Sensorino:
 
     def registerService(self, service):
         try:
-            self.getService(service.serviceId)
+            self.getService(service.instanceId)
         except ServiceNotFoundError:
+            print "append service "+str(service.instanceId)+" to senso "+str(self.address)
             self.services.append(service)
             return True
         return False
@@ -54,9 +55,11 @@ class Sensorino:
     def removeService(self, service):
         self.services.remove(service)
 
-    def getService(self, serviceId):
+    def getService(self, instanceId):
         for service in self.services:
-            if service.serviceId==serviceId:
+            print "search service "+str(instanceId)+"compare to "+str(service.instanceId)
+            if str(service.instanceId)==str(instanceId):
+                print "got it!"
                 return service
         raise ServiceNotFoundError("service not found/registered")
 
@@ -203,6 +206,7 @@ class Service():
         return {
             'name': self.name,
             'serviceId' : self.serviceId,
+            'instanceId' : self.instanceId,
             'saddress': self.saddress,
             'channels': self.channels
         }
@@ -227,8 +231,6 @@ class Service():
                 services.append(service)
 
         return services
-
-
 
 
     def loadChannels(self):
@@ -291,6 +293,17 @@ class Service():
             logger.debug("unable to log on service without channel")
             return False
 
+        logger.debug("we should check sanity: is data corresponding to type ?");
+        try:
+            chanInfos=self.channels[channelId] 
+        except: 
+           raise ChannelNotFoundError("failed to load channel "+str(channelId)+" for service sid/instanceId"+self.serviceId+"/"+self.instanceId) 
+
+        if (not chanInfos['dataType'] in value):
+            raise FailToLogOnChannelError("dataType error")
+        if (None == value[chanInfos['dataType']]):
+            raise FailToLogOnChannelError("data error")
+
         status=None
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
@@ -302,10 +315,8 @@ class Service():
                 else:
                     logger.debug("unable to log on multiple channel service without channelId")
                     return False
-            
 
-            logger.debug("Log data on sensorino"+str(self.saddress)+" service: "+self.name+" chanID: "+str(channelId)+" data:"+str(value))
-
+            logger.debug("Log data on sensorino"+str(self.saddress)+" service: "+self.name+" chanID: "+str(channelId)+" data:"+str(chanInfos['dataType']))
             status=c.execute("INSERT INTO dataServicesLog (saddress, serviceId, channelId, value, timestamp) VALUES (?,?,?,?,?) ",
                      (self.saddress, self.serviceId, channelId, value, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             conn.commit()

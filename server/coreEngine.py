@@ -91,12 +91,11 @@ class Core:
             return None
         return s.services 
 
-    def createService(self, saddress, name, serviceId ):
-        logger.debug("search ssenso "+saddress)
+    def createService(self, saddress, name, instanceId ):
         s = self.findSensorino(saddress=saddress)
-        service=sensorino.Service(name, s.address, serviceId)
+        service=sensorino.Service(name, s.address, instanceId)
         if (False==s.registerService(service)):
-            return False
+            raise FailToAddServiceError("register failed")
         status=service.save()
         return service
 
@@ -132,6 +131,7 @@ class Core:
             payload=  { "service": {"saddress": saddress, "serviceId":serviceId}}
             logger.warn(self.mqtt.mqttc.publish("discover", json.dumps(payload) ))
             raise ServiceNotFoundError("unable to publish on unknown service, mqttt clients will receive some notice")
+
         return service.logData(data, channelId)
 
     def setState(self, saddress, serviceId, state):

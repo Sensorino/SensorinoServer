@@ -88,11 +88,11 @@ class ServicesBySensorino(restful.Resource):
     def post(self, address):
         rparse = reqparse.RequestParser()
         rparse.add_argument('name', type=str, required=True, help="your service needs a name", location="json")
-      #  rparse.add_argument('location', type=str, required=False, help="Where is your device ?", location="json")
+        rparse.add_argument('instanceId', type=str, required=True, help="What's your number babe ?", location="json")
         args =rparse.parse_args()
         
         try:
-            service=coreEngine.createService( address, args['name'])
+            service=coreEngine.createService( address, args['name'], args['instanceId'])
             return service.toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino "+address)
@@ -101,20 +101,20 @@ class ServicesBySensorino(restful.Resource):
 
 class ServiceBySensorino(restful.Resource):
     """ Handle service details, update and delete"""
-    def get(self, address, serviceId):
+    def get(self, address, instanceId):
         try:
-            service=coreEngine.findSensorino(saddress=address).getService(serviceId)
+            service=coreEngine.findSensorino(saddress=address).getService(instanceId)
             print "now transform service to data"
             print service.toData()
-            return coreEngine.findSensorino(saddress=address).getService(serviceId).toData()
+            return coreEngine.findSensorino(saddress=address).getService(instanceId).toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
             abort(404, message="no such service")
 
-    def delete(self, address, serviceId):
+    def delete(self, address, instanceId):
         try:
-            coreEngine.deleteService(address, serviceId)
+            coreEngine.deleteService(address, instanceId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
 
@@ -122,22 +122,22 @@ class ServiceBySensorino(restful.Resource):
 
 class ChannelsByService(restful.Resource):
     """Handle channels list"""
-    def get(self, address, serviceId):
+    def get(self, address, instanceId):
         try:
             sensorinoId=int(address)
-            return coreEngine.findSensorino(saddress=address).getService(serviceId).channels
+            return coreEngine.findSensorino(saddress=address).getService(instanceId).channels
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
             abort(404, message="no such service")
 
-    def post(self, address, serviceId):
+    def post(self, address, instanceId):
         rparse = reqparse.RequestParser()
-        rparse.add_argument('channels', type=str, required=True, help="Need an array of dataType", location="json")
+        rparse.add_argument('channels', type=list, required=True, help="Need an array of dataType", location="json")
         args =rparse.parse_args()
         try: 
             sensorinoId=int(address)
-            return coreEngine.findSensorino(saddress=address).getService(serviceId).setChannels(args["channels"])
+            return coreEngine.findSensorino(saddress=address).getService(instanceId).setChannels(args["channels"])
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -145,21 +145,19 @@ class ChannelsByService(restful.Resource):
 
 
 class Channel(restful.Resource):
-    def delete(self, address, serviceId, channelId):
+    def delete(self, address, instanceId, channelId):
         try:
-            coreEngine.deleteChannel(self, address, serviceId, channelId)
+            coreEngine.deleteChannel(self, address, instanceId, channelId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
 
-    #def get(self, address, serviceId, channelId):
-    #def put(self, address):
 
-    def post(self, address, serviceId):
+    def post(self, address, instanceId):
         rparse = reqparse.RequestParser()
-        rparse.add_argument('data', type=str, required=True, help="are you loging data ?", location="json")
+        rparse.add_argument('data', type=dict, required=True, help="are you loging data ?", location="json")
         args =rparse.parse_args()
         try: 
-            coreEngine.publish(address, serviceId, channelId,  args['data'])
+            coreEngine.publish(address, instanceId, args['data'], channelId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -171,10 +169,10 @@ class Channel(restful.Resource):
 api.add_resource(RestSensorinoList, '/sensorinos')
 api.add_resource(RestSensorino, '/sensorinos/<string:address>')
 api.add_resource(ServicesBySensorino, '/sensorinos/<string:address>/services')
-api.add_resource(ServiceBySensorino, '/sensorinos/<string:address>/services/<int:serviceId>')
-api.add_resource(ChannelsByService, '/sensorinos/<string:address>/services/<int:serviceId>/channels')
-api.add_resource(Channel, '/sensorinos/<string:address>/services/<int:serviceId>/channels/<int:channelId>')
-#api.add_resource(PublishDataServiceByChannel, '/sensorinos/<string:address>/services/<int:serviceId>/channel/<int:channelId>/data')
+api.add_resource(ServiceBySensorino, '/sensorinos/<string:address>/services/<int:instanceId>')
+api.add_resource(ChannelsByService, '/sensorinos/<string:address>/services/<int:instanceId>/channels')
+api.add_resource(Channel, '/sensorinos/<string:address>/services/<int:instanceId>/channels/<int:channelId>')
+#api.add_resource(PublishDataServiceByChannel, '/sensorinos/<string:address>/services/<int:instanceId>/channel/<int:channelId>/data')
 
 
 
