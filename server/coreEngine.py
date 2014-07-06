@@ -91,10 +91,10 @@ class Core:
             return None
         return s.services 
 
-    def createDataService(self, saddress, name ):
+    def createService(self, saddress, name ):
         logger.debug("search ssenso "+saddress)
         s = self.findSensorino(saddress=saddress)
-        service=sensorino.DataService(name, s.address)
+        service=sensorino.Service(name, s.address)
         if (False==s.registerService(service)):
             return False
         status=service.save()
@@ -167,7 +167,6 @@ class Core:
         """confire mqtt client and create thread for it"""
         def mqtt_on_connect(mosq, obj, rc):
             mosq.subscribe("sensorino", 0)
-            print("rc: "+str(rc))
 
         def mqtt_on_message(mosq, obj, msg):
             print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))

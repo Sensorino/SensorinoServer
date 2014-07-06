@@ -40,7 +40,7 @@ class TestX(unittest.TestCase):
 
     def test_sensorino_creation_deletion(self):
         self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
-        self.assertIsNone(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
+        self.assertRaises(FailToAddSensorinoError, self.engine.addSensorino, (sensorino.Sensorino("tokenSensorino", "1234")))
         sens=self.engine.findSensorino(saddress="1234")
         self.assertIsNotNone(sens)
         self.assertTrue(self.engine.delSensorino(sens.address))
@@ -59,7 +59,7 @@ class TestX(unittest.TestCase):
     def test_Service(self):
         self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
         sens=self.engine.findSensorino(saddress="1234")
-        self.assertTrue(self.engine.createDataService(sens.address, "testService" ))
+        self.assertTrue(self.engine.createService(sens.address, "testService" ))
         services=self.engine.getServicesBySensorino(sens.address)
         s=None
         for service in services: 
@@ -69,7 +69,9 @@ class TestX(unittest.TestCase):
         self.assertIsNotNone(s)
         
         # now create channels
-        s.setChannels(['Foo']) 
+        newChans=[{'dataType':'Foo', 'type':"RW"}]
+        chans=s.setChannels(newChans) 
+        self.assertEqual(chans, 1)
 
         # publish 
         s.logData(None, "test")

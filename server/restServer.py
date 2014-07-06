@@ -92,7 +92,7 @@ class ServicesBySensorino(restful.Resource):
         args =rparse.parse_args()
         
         try:
-            service=coreEngine.createDataService( address, args['name'])
+            service=coreEngine.createService( address, args['name'])
             return service.toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino "+address)
@@ -184,8 +184,8 @@ if __name__ == '__main__':
     print "engine started"
     app.config['PROPAGATE_EXCEPTIONS'] = True
 
-    print("launch app on local loop, you should proxy/forward port on "+common.Config.getRestServer())
-    app.run(debug=True)
+    print("launch app on local loop, you should proxy/forward port on "+common.Config.getRestServerAddress())
+    app.run(debug=True, port=common.Config.getRestServerPort())
     print "app running"
 
 

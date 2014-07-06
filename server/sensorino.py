@@ -121,6 +121,8 @@ class Sensorino:
             
 
 
+
+# Location has a wider scope: typically a building or a room 
 class Location:
     def __init__(self, name, position="DEFAULT"):
         self.name=name
@@ -133,6 +135,7 @@ class Location:
             'position': self.position,
         }
 
+# Position is more precise: typically a room or relative position window/back/front
 class Position:
     def __init__(self, name):
         self.name=name
@@ -143,15 +146,14 @@ class Position:
         }
 
 
-# Services can be linked to a sensor, an actuator or be a network protocol handler (Ping?)
-
+# Service are attached to a sensorino and handles various channels
 class Service():
     def __init__(self, name, serviceId):
         self.name=name
         self.serviceId=serviceId
         self.saddress=None
-        self.stype=None
         self.channels=[]
+        self.loadChannels()
 
     def setSensorino(self, s):
         self.saddress=s.address
@@ -167,12 +169,12 @@ class Service():
             status=None
             if (self.serviceId==None):
                 logger.debug("INSERT service")
-                status=c.execute("INSERT INTO services ( name, stype,  saddress)  VALUES (?,?,?)",
-                    ( self.name, self.stype, self.saddress))
+                status=c.execute("INSERT INTO services ( name,  saddress)  VALUES (?,?)",
+                    ( self.name,  self.saddress))
                 self.serviceId=c.lastrowid
             else:
                 logger.debug("UPDATE service")
-                status=c.execute("UPDATE services SET stype=:stype WHERE saddress=:saddress AND serviceId=:serviceId LIMIT 1",
+                status=c.execute("UPDATE services SET  WHERE saddress=:saddress AND serviceId=:serviceId LIMIT 1",
                      self.toData())
             conn.commit()
         except Exception as e:
@@ -201,7 +203,6 @@ class Service():
             'name': self.name,
             'serviceId' : self.serviceId,
             'saddress': self.saddress,
-            'stype' : self.stype,
             'channels': self.channels
         }
 
@@ -218,11 +219,7 @@ class Service():
 
         services=[]
         for srow in rows:
-            service=None
-            if("DATA" == srow["stype"]):
-                service=DataService(srow['name'],  saddress, srow['serviceId'])
-            elif("ACTUATOR" == srow["stype"]):
-                service=ActuatorService(srow['name'],  saddress, srow['serviceId'])
+            service=Service(srow['name'],  saddress, srow['serviceId'])
             if(None==service):
                 logger.error("failed to load service for sensorino :"+srow)
             else:
@@ -233,31 +230,9 @@ class Service():
 
 
 
-class DataService(Service):
-    def __init__(self, name,  saddress, serviceId=None):
-        Service.__init__( self, name, serviceId)
-        self.saddress=saddress
-        self.stype="DATA"
-
-        # need to load channels
-        try:
-            conn = sqlite3.connect(common.Config.getDbFilename())
-            conn.row_factory = common.dict_factory
-            c = conn.cursor()
-
-            c.execute("SELECT * FROM dataChannels WHERE serviceId=:serviceId", self.toData())
-            channels = c.fetchall()
-            for channel in channels:
-                self.channels[channel["channelId"]]=channel["dataType"]
-        except Exception as e:
-            print(e)
-            # Roll back any change if something goes wrong
-            conn.rollback()
-
-        conn.close()
-
-
     def loadChannels(self):
+        if (None == self.serviceId ): # brand new service
+            return True
         status = None
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
@@ -273,10 +248,10 @@ class DataService(Service):
             # Roll back any change if something goes wrong
             conn.rollback()
 
-        return status
+        return len(self.channels)
 
 
-    def setChannels(self, dataTypes):
+    def setChannels(self, chansInfos):
         status = None
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
@@ -285,9 +260,14 @@ class DataService(Service):
             logger.debug("clear channels for service "+str(self.serviceId))
             c.execute("DELETE FROM dataChannels WHERE serviceId=?", (str(self.serviceId),))
 
-            logger.debug("insert "+str(len(dataTypes))+" channels in service "+str(self.serviceId))
-            for dataType in dataTypes:
-                status=c.execute("INSERT INTO dataChannels (serviceId, dataType) VALUES (?,?)", ( self.serviceId, dataType))
+            logger.debug("insert "+str(len(chansInfos))+" channels in service "+str(self.serviceId))
+             
+            for infos in chansInfos:
+                if not("dataType" in infos and "type" in infos):
+                    raise FailToSetServiceChannelsError("incomplete or invalid channel info "+str(infos))
+
+            for infos in chansInfos:
+                status=c.execute("INSERT INTO dataChannels (serviceId, dataType, type) VALUES (?,?,?)", ( self.serviceId, infos['dataType'], infos['type']))
 
             c.execute("SELECT * from dataChannels ")
             rows=c.fetchall()
@@ -349,29 +329,6 @@ class DataService(Service):
 
 
 
-class ActuatorService(Service):
-
-    def __init__(self, name, dataType, saddress, serviceId=None):
-        Service.__init__( self, name, serviceId)
-        self.dataType=dataType
-        self.saddress=saddress
-        self.stype="ACTUATOR"
-
-    def setState(self, state):
-        status=None
-        try:
-            conn = sqlite3.connect(common.Config.getDbFilename())
-            c = conn.cursor()
-            status=c.execute("UPDATE sensorinos SET name=:name, address=:address, description=:description, owner=:owner, location=:location WHERE saddress=:saddress", self.toData())
-            conn.commit()
-            self.state=state
-        except Exception as e:
-            print(e)
-            # Roll back any change if something goes wrong
-            conn.rollback()
-
-        conn.close()
-        return status
 
  
 

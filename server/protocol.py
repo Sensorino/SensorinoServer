@@ -32,7 +32,7 @@ httplib2.debuglevel     = 0
 http                    = httplib2.Http()
 content_type_header     = "application/json"
 headers                 = {'Content-type': 'application/json'}
-baseUrl                 = common.Config.getRestServer()+"/sensorinos/"
+baseUrl                 = "http://"+common.Config.getRestServerAddress()+":"+str(common.Config.getRestServerPort())
 
 
 
@@ -77,7 +77,9 @@ class Protocol:
                 #service list from sensorino with address 10
                 # { "from": 10, "to": 0, "type": "publish", "serviceId": [ 0, 1 ] },
 
-                if ( "serviceId" in message and message["serviceId"] is list):
+                print "serviceid: "+str(message["serviceId"])
+
+                if ( "serviceId" in message and  isinstance(message["serviceId"], list)):
                     print "now declare sensorino";
                     sens={
                         'address'   : message["from"],
@@ -89,6 +91,8 @@ class Protocol:
                         'POST',
                         json.dumps(sens),
                         headers)
+                    print "response: "+str(response);
+                    print "content: "+str(content);
         
                         
                 elif( "dataType" in message):
@@ -119,13 +123,13 @@ class Protocol:
                             "settable": pos<=message['count'][1],
                         }
                         response, content = http.request(
-                            baseUrl+"/sensorinos/"+message['from']+"/services/"+service['instanceId']+"/channels",
+                            baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(service['instanceId'])+"/channels",
                             'POST',
                             json.dumps(channel),
                             headers)
                         position=position+1
 
-                else
+                else:
                     # publish from a service 1 of type switch on sensorino with address 10
                     # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
 
@@ -137,7 +141,7 @@ class Protocol:
                         'description' : 'new sensorino'
                     }
                     response, content = http.request( 
-                        baseUrl+"/sensorinos/services/"+message["serviceId"]+"/channels",
+                        baseUrl+"/sensorinos/services/"+str(message["serviceId"])+"/channels",
                         'POST',
                         json.dumps(sens),
                         headers)
@@ -165,7 +169,7 @@ class Protocol:
                     
         except Exception, e:
               
-            logger.error("fail to treat json message "+jsonString)
+            logger.error("fail to treat json message "+str(jsonString))
             logger.error(e)
 
             print repr(traceback.format_stack())

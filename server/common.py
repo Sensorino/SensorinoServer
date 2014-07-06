@@ -1,4 +1,5 @@
 import ConfigParser
+import errors
 
 
 class Config:
@@ -12,7 +13,8 @@ class Config:
     @staticmethod
     def load():
         Config.config = ConfigParser.ConfigParser()
-        Config.config.read(Config.filename)
+        if len(Config.config.read(Config.filename))==0:
+           raise ConfigFileNotFoundError("unable to open "+filename) 
 
     @staticmethod
     def setConfigFile(filename):
@@ -32,11 +34,16 @@ class Config:
         return Config.config.get("Mqtt", "ServerAddress")
        
     @staticmethod
-    def getRestServer():
+    def getRestServerAddress():
         if (Config.config==None):
             Config.load()
         return Config.config.get("RestServer", "ServerAddress")
-      
+    @staticmethod
+    def getRestServerPort():
+        if (Config.config==None):
+            Config.load()
+        return int(Config.config.get("RestServer", "ServerPort"))
+     
 
 def dict_factory(cursor, row):
     d = {}
