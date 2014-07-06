@@ -91,10 +91,10 @@ class Core:
             return None
         return s.services 
 
-    def createService(self, saddress, name ):
+    def createService(self, saddress, name, serviceId ):
         logger.debug("search ssenso "+saddress)
         s = self.findSensorino(saddress=saddress)
-        service=sensorino.Service(name, s.address)
+        service=sensorino.Service(name, s.address, serviceId)
         if (False==s.registerService(service)):
             return False
         status=service.save()

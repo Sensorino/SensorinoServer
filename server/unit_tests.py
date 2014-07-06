@@ -59,7 +59,7 @@ class TestX(unittest.TestCase):
     def test_Service(self):
         self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
         sens=self.engine.findSensorino(saddress="1234")
-        self.assertTrue(self.engine.createService(sens.address, "testService" ))
+        self.assertTrue(self.engine.createService(sens.address, "testService", 1 ))
         services=self.engine.getServicesBySensorino(sens.address)
         s=None
         for service in services: 

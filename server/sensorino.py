@@ -148,10 +148,11 @@ class Position:
 
 # Service are attached to a sensorino and handles various channels
 class Service():
-    def __init__(self, name, serviceId):
+    def __init__(self, name, address, instanceId):
         self.name=name
-        self.serviceId=serviceId
-        self.saddress=None
+        self.serviceId=None
+        self.instanceId=instanceId
+        self.saddress=address
         self.channels=[]
         self.loadChannels()
 
@@ -169,12 +170,12 @@ class Service():
             status=None
             if (self.serviceId==None):
                 logger.debug("INSERT service")
-                status=c.execute("INSERT INTO services ( name,  saddress)  VALUES (?,?)",
-                    ( self.name,  self.saddress))
+                status=c.execute("INSERT INTO services ( name,  saddress, instanceId)  VALUES (?,?,?)",
+                    ( self.name,  self.saddress, self.instanceId))
                 self.serviceId=c.lastrowid
             else:
                 logger.debug("UPDATE service")
-                status=c.execute("UPDATE services SET  WHERE saddress=:saddress AND serviceId=:serviceId LIMIT 1",
+                status=c.execute("UPDATE services  SET name=:name  WHERE saddress=:saddress AND serviceId=:serviceId LIMIT 1",
                      self.toData())
             conn.commit()
         except Exception as e:
