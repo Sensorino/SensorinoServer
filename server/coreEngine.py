@@ -43,7 +43,7 @@ class Core:
     def loadSensorinos(self):
         """load all sensorinos stored in db """
         if (self._sensorinosLoaded):
-            logger.debug("won't reload sensorinos")
+            logger.debug("core started already, won't reload sensorinos")
             return
         for senso in sensorino.Sensorino.loadAllSensorinos():
             senso.loadServices()

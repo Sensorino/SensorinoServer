@@ -151,9 +151,9 @@ class Position:
 
 # Service are attached to a sensorino and handles various channels
 class Service():
-    def __init__(self, name, address, instanceId):
+    def __init__(self, name, address, instanceId, serviceId=None):
         self.name=name
-        self.serviceId=None
+        self.serviceId=serviceId
         self.instanceId=instanceId
         self.saddress=address
         self.channels=[]
@@ -224,10 +224,11 @@ class Service():
 
         services=[]
         for srow in rows:
-            service=Service(srow['name'],  saddress, srow['serviceId'])
+            service=Service(srow['name'],  saddress, srow['instanceId'], srow['serviceId'])
             if(None==service):
                 logger.error("failed to load service for sensorino :"+srow)
             else:
+                service.loadChannels()
                 services.append(service)
 
         return services
@@ -245,11 +246,13 @@ class Service():
 
             status = c.execute("SELECT * from dataChannels WHERE serviceId=? ORDER BY channelId", (str(self.serviceId),))
             self.channels = c.fetchall()
-
         except Exception as e:
             print(e)
             # Roll back any change if something goes wrong
             conn.rollback()
+
+        for chan in self.channels:
+            chan['serviceId']=self.serviceId
 
         return len(self.channels)
 
@@ -272,8 +275,6 @@ class Service():
             for infos in chansInfos:
                 status=c.execute("INSERT INTO dataChannels (serviceId, dataType, type) VALUES (?,?,?)", ( self.serviceId, infos['dataType'], infos['type']))
 
-            c.execute("SELECT * from dataChannels ")
-            rows=c.fetchall()
             conn.commit()
         except Exception as e:
             print(e)

@@ -99,52 +99,67 @@ class Protocol:
                     
                     print "now declare service"
 
+                    service={
+                        "name": "new service",
+                        "instanceId":message['serviceId']
+                    }
+                    response, content = http.request(
+                        baseUrl+"/sensorinos/"+str(message['from'])+"/services",
+                        'POST',
+                        json.dumps(service),
+                        headers)
+
+                    print "response: "+str(response);
+                    print "content: "+str(content);
+                
+                    if ('404'==response['status']):
+                        print "not there"
+                        return False
+                    if ('200'==response['status']):
+                        print "ok"
+                    else:
+                        print "some error ?"
+                    
+                    sens=content
+
+                    channels=[]
+
                     if ( isinstance(message["dataType"], list)):
                         # { "dataType": [ "temperature", "temperature", "switch", "switch", ], "count": [ 2, 2 ] } 
                         print "this is multi channel service"
-                        print "to be supplied later"
+                        position=0
+                        publishers=message['count'][0]
+                        settables=message['count'][1]
+                        chanType="publisher"
+                        for dataType in message["dataType"]:
+                            if position>=publishers:
+                                chanType="settable"
+                            channels.append({                                
+                                "position": position,
+                                "dataType": dataType,
+                                "type": chanType
+                                })
+                            position=position+1
+
                     else:
                         # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
                         print "single channel service"
-
-                        service={
-                            "name": "new service",
-                            "instanceId":message['serviceId']
-                        }
-                        response, content = http.request(
-                            baseUrl+"/sensorinos/"+str(message['from'])+"/services",
-                            'POST',
-                            json.dumps(service),
-                            headers)
-
-                        print "response: "+str(response);
-                        print "content: "+str(content);
-                    
-                        if ('404'==response['status']):
-                            print "not there"
-                            return False
-                        if ('200'==response['status']):
-                            print "ok"
-                        else:
-                            print "some error ?"
-                        
-                        sens=content
-
-
-                        print "youp di doup, now channel"
-                        position=0
-                        channels=[{
+                        chanType="publisher"
+                        if message['count'][1]!=0:
+                            chanType="settable"
+                        channels.append({
                             "position": 0,
                             "dataType": message["dataType"],
-                            "type": "RW" # treat this with "count" array
-                        }]
-                        response, content = http.request(
-                            baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(service['instanceId'])+"/channels",
-                            'POST',
-                            json.dumps({'channels':channels}),
-                            headers)
-                        print "response: "+str(response);
-                        print "content: "+str(content);
+                            "type": chanType
+                        })
+
+                    response, content = http.request(
+                        baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(service['instanceId'])+"/channels",
+                        'POST',
+                        json.dumps({'channels':channels}),
+                        headers)
+                    print "response: "+str(response);
+                    print "content: "+str(content);
 
 
                 else:
@@ -152,8 +167,6 @@ class Protocol:
                     # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
 
                     print "data publish"
-
-                    
 
                     url= baseUrl+"/sensorinos/services/"+str(message["serviceId"])+"/channels"
                     if 'from' in message: del message['from']
