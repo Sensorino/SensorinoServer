@@ -114,7 +114,7 @@ class Core:
         
     # TODO generate exception on failures, this will allow rest server to translate them into http status
     
-    def publish(self, saddress, serviceId, data, channelId=None):
+    def publish(self, saddress, instanceId, data, channelId=None):
         """publish some data on dataService with given id"""
         sens = None
         try:
@@ -125,14 +125,32 @@ class Core:
             return False
         service=None
         try:
-            service=sens.getService(serviceId)
+            service=sens.getService(instanceId)
         except ServiceNotFoundError:
             logger.warn("logging data from unknown service is not allowed")
-            payload=  { "service": {"saddress": saddress, "serviceId":serviceId}}
+            payload=  { "service": {"saddress": saddress, "instanceId":serviceId}}
             logger.warn(self.mqtt.mqttc.publish("discover", json.dumps(payload) ))
             raise ServiceNotFoundError("unable to publish on unknown service, mqttt clients will receive some notice")
 
         return service.logData(data, channelId)
+
+    def getLogs(self, saddress, instanceId, channelId):
+        """publish some data on dataService with given id"""
+        sens = None
+        try:
+            sens=self.findSensorino(saddress=saddress)
+        except SensorinoNotFoundError:
+            return False
+        service=None
+        try:
+            service=sens.getService(instanceId)
+        except ServiceNotFoundError:
+            raise ServiceNotFoundError("unknown")
+
+        logger.debug("not implemented yet")
+        return []
+
+
 
     def setState(self, saddress, serviceId, state):
         """to setState we should send command and wait for the publish back"""

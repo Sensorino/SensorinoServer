@@ -168,14 +168,14 @@ class Protocol:
 
                     print "data publish"
 
-                    url= baseUrl+"/sensorinos/services/"+str(message["serviceId"])+"/channels"
+                    url= baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(message["serviceId"])+"/channels"
                     if 'from' in message: del message['from']
                     if 'to' in message: del message['to']
                     if 'type' in message: del message['type']
                     
                     response, content = http.request( 
                         url,
-                        'POST',
+                        'PUT',
                         json.dumps({'data':message}),
                         headers)
                     print "response: "+str(response);

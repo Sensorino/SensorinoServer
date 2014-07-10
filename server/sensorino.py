@@ -286,13 +286,26 @@ class Service():
         return self.loadChannels()
 
 
-    def logData(self, channelId, value):
+    def logData(self, value, channelId=None):
 
         logger.debug("log data on service:"+str(self.serviceId)+"/chan:"+str(channelId))
 
         if (len(self.channels)==0):
             logger.debug("unable to log on service without channel")
             return False
+
+        if None==channelId:
+            logger.debug("no chan specified, filter list")
+            logger.debug(value)
+            for c in self.channels:
+                logger.debug("check chan")
+                logger.debug(c)
+            candidates = [c for c in self.channels if c['dataType'] in value]
+            if len(candidates)==1:
+                channelId=candidates[0]['channelId']-1
+            else:
+                raise ChannelNotFoundError("unable to find chan: "+len(candidates)+" candidates")
+                
 
         logger.debug("we should check sanity: is data corresponding to type ?");
         try:
@@ -301,6 +314,7 @@ class Service():
            raise ChannelNotFoundError("failed to load channel "+str(channelId)+" for service sid/instanceId"+self.serviceId+"/"+self.instanceId) 
 
         if (not chanInfos['dataType'] in value):
+            print chanInfos
             raise FailToLogOnChannelError("dataType error")
         if (None == value[chanInfos['dataType']]):
             raise FailToLogOnChannelError("data error")

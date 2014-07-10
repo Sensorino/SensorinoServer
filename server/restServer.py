@@ -143,6 +143,19 @@ class ChannelsByService(restful.Resource):
         except ServiceNotFoundError:
             abort(404, message="no such service")
 
+    def put(self, address, instanceId):
+        rparse = reqparse.RequestParser()
+        rparse.add_argument('data', type=dict, required=True, help="are you loging data ?", location="json")
+        args =rparse.parse_args()
+        try: 
+            coreEngine.publish(address, instanceId, args['data'])
+        except SensorinoNotFoundError:
+            abort(404, message="no such sensorino")
+        except ServiceNotFoundError:
+            abort(404, message="no such service")
+
+
+
 
 class Channel(restful.Resource):
     def delete(self, address, instanceId, channelId):
