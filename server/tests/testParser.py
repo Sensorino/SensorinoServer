@@ -5,16 +5,16 @@
 #
 #-------------------------------------------------------------------------------
 
+import protocol
 import sys
 sys.path.append("..")
 import json
-import messageParser
 
 
 def main():
-    parser=messageParser.MessageParser()
+    protocol=protocol.Protocol()
     json_data = open(sys.argv[1])
-    parser.processMessage(json.load(json_data))
+    print protocol.treatMessage(json_data)
 
 
 

@@ -176,6 +176,19 @@ class Channel(restful.Resource):
         except ServiceNotFoundError:
             abort(404, message="no such service")
 
+
+class ChannelLog(restful.Resource):
+    def get(self, address, instanceId, channelId):
+        try:
+            return coreEngine.getLogs(self, saddress, instanceId, channelId)
+        except SensorinoNotFoundError:
+            abort(404, message="no such sensorino")
+        except ServiceNotFoundError:
+            abort(404, message="no such service")
+        except ChannelNotFoundError:
+            abort(404, message="no such channel")
+
+        
       
 
 
@@ -184,8 +197,8 @@ api.add_resource(RestSensorino, '/sensorinos/<string:address>')
 api.add_resource(ServicesBySensorino, '/sensorinos/<string:address>/services')
 api.add_resource(ServiceBySensorino, '/sensorinos/<string:address>/services/<int:instanceId>')
 api.add_resource(ChannelsByService, '/sensorinos/<string:address>/services/<int:instanceId>/channels')
-api.add_resource(Channel, '/sensorinos/<string:address>/services/<int:instanceId>/channels/<int:channelId>')
-#api.add_resource(PublishDataServiceByChannel, '/sensorinos/<string:address>/services/<int:instanceId>/channel/<int:channelId>/data')
+api.add_resource(Channel,    '/sensorinos/<string:address>/services/<int:instanceId>/channels/<int:channelId>')
+api.add_resource(ChannelLog, '/sensorinos/<string:address>/services/<int:instanceId>/channel/<int:channelId>/data')
 
 
 

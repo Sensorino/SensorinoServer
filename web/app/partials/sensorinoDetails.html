@@ -14,16 +14,11 @@
 
         <h2>Services</h2>
         <table class="table">
-            <tr><th>Service name</th><th>type</th><th>serviceId</th><th/><th/></tr> <!-- TODO: device -->
+            <tr><th>Service name</th><th>instanceId</th><th>serviceId</th><th/><th/></tr> <!-- TODO: device -->
             <tr ng-repeat="service in services">
-                <td><a href="#/sensorino/{{sensorino.address}}/dataServices/{{service.serviceId}}">{{service.name}}</a></td>
-                <td>{{service.dataType}}</td>
+                <td><a href="#/sensorino/{{sensorino.address}}/services/{{service.serviceId}}">{{service.name}}</a></td>
+                <td>{{service.instanceId}}</td>
                 <td>{{service.serviceId}}</td>
-                <td>
-                    <button type="button" class="btn btn-default btn-lg" ng-click="move('#/sensorino/'+sensorino.address+'/dataServices/'+service.serviceId)">
-                         <span class="glyphicon glyphicon-stats"></span>
-                    </button>
-                </td>
                 <td>
                     <button type="button" class="btn btn-default btn-lg" ng-click="deleteService(service.serviceId)">
                          <span class="glyphicon glyphicon-remove"></span>
@@ -32,6 +27,28 @@
             </tr>
         </table>
     </div>
+
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" ng-show="selectedService!=undefined">
+
+        <h3>Channels</h3>
+        <table class="table">
+            <tr><th>ChannelId</th><th>dataType</th><th>type</th><th/></tr> 
+            <tr ng-repeat="channel in selectedService.channels">
+                <td>{{channel.channelId}}</td>
+                <td>{{channel.dataType}}</td>
+                <td>{{channel.type}}</td>
+                <td>
+                    <button type="button" class="btn btn-default btn-lg" ng-click="move('#/sensorino/'+channel.saddress+'/services/'+channel.serviceId+'/channel/'+channel.channelId+'/data')">
+                         <span class="glyphicon glyphicon-stats"></span>
+                    </button>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+
+
+
 
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main" ng-show="showForm==false">
         <button type="button" class="btn btn-default btn-lg" ng-click="activateForm()">

@@ -26,7 +26,7 @@ sensorinoApp.config(['$routeProvider', function($routeProvider) {
             templateUrl: 'partials/sensorinoDetails.html',
             controller: 'SensorinoDetailsCtrl'
         }).
-        when('/sensorino/:sId/dataServices/:serviceId', {
+        when('/sensorino/:sId/services/:serviceId', {
             templateUrl: 'partials/serviceDataLog.html',
             controller: 'ServiceDataLogCtrl'
         }).
@@ -127,10 +127,13 @@ sensorinoApp.controller('SensorinoDetailsCtrl', function($scope, $location, $rou
             $scope.sensorino=sensorino;
         });
 
-        var RServices=Restangular.all("sensorinos/"+$routeParams.sId+"/dataServices");
+        var RServices=Restangular.all("sensorinos/"+$routeParams.sId+"/services");
         $scope.loadServices=function(){
             RServices.getList().then(function(services){
                 $scope.services=services;
+                if (services.length>0){
+                    $scope.selectedService=services[0];
+                }
             });
         }
 
@@ -148,7 +151,7 @@ sensorinoApp.controller('SensorinoDetailsCtrl', function($scope, $location, $rou
         $scope.deleteService = function(serviceId){
             console.log("delete service :");
             console.log(serviceId);
-            var RService=Restangular.one("sensorinos/"+$routeParams.sId+"/dataServices/"+serviceId);
+            var RService=Restangular.one("sensorinos/"+$routeParams.sId+"/services/"+serviceId);
             RService.remove().then($scope.loadServices());
         }
 
@@ -165,7 +168,7 @@ sensorinoApp.controller('SensorinoDetailsCtrl', function($scope, $location, $rou
 sensorinoApp.controller('ServiceDataLogCtrl',  function($scope, $routeParams, Restangular) {
 
     Restangular.setBaseUrl("/")
-    var RServicesData=Restangular.all("sensorinos/"+$routeParams.sId+"/dataServices/"+$routeParams.serviceId+"/data");
+    var RServicesData=Restangular.all("sensorinos/"+$routeParams.sId+"/services/"+$routeParams.serviceId+"/data");
     $scope.loadData=function(){
         RServicesData.getList().then(function(logs){
             $scope.logs=logs;
@@ -174,7 +177,7 @@ sensorinoApp.controller('ServiceDataLogCtrl',  function($scope, $routeParams, Re
     $scope.loadData()
   
  
-    var RService=Restangular.one("sensorinos/"+$routeParams.sId+"/dataServices/"+$routeParams.serviceId);
+    var RService=Restangular.one("sensorinos/"+$routeParams.sId+"/services/"+$routeParams.serviceId);
     $scope.loadService=function(){
         RService.get().then(function(service){
             $scope.service=service;
