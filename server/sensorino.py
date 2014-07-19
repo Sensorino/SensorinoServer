@@ -47,7 +47,6 @@ class Sensorino:
         try:
             self.getService(service.instanceId)
         except ServiceNotFoundError:
-            print "append service "+str(service.instanceId)+" to senso "+str(self.address)
             self.services.append(service)
             return True
         return False
@@ -57,9 +56,7 @@ class Sensorino:
 
     def getService(self, instanceId):
         for service in self.services:
-            print "search service "+str(instanceId)+"compare to "+str(service.instanceId)
             if str(service.instanceId)==str(instanceId):
-                print "got it!"
                 return service
         raise ServiceNotFoundError("service not found/registered")
 
@@ -74,51 +71,56 @@ class Sensorino:
 
     def save(self):
         logger.debug("insert/update sensorino in db")
-        status=None
+        logger.debug(self)
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
             c = conn.cursor()
-            status=c.execute("INSERT OR REPLACE INTO sensorinos  (name, description, owner, location, address) VALUES(?,?,?,?,?)", (self.name, self.description, self.owner, self.location, self.address))
+            status=c.execute("INSERT OR REPLACE INTO sensorinos  (name, description, owner, location, address) VALUES(?,?,?,?,?)", (self.name, self.description, self.owner, self.location, str(self.address),))
             conn.commit()
         except Exception as e:
-            print(e)
+            logger.debug(e)
             # Roll back any change if something goes wrong
             conn.rollback()
             raise FailToSaveSensorinoError("failed to save sensorino to db")
             
-        return status
 
     def delete(self):
-        status=None
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
             c = conn.cursor()
-            status=c.execute("DELETE FROM sensorinos WHERE address=? ",( self.address,))
+            logger.debug("DELETE ROM sensorinos WHERE address="+str(self.address))
+            status=c.execute("DELETE FROM sensorinos WHERE address=:address ", { 'address': self.address})
             conn.commit()
         except Exception as e:
-            print(e)
+            logger.debug("delete fail: "+str(e))
             # Roll back any change if something goes wrong
             conn.rollback()
+            raise FailToDeleteSensorinoError("not deleted")
 
-        return status
 
     @staticmethod
     def loadAllSensorinos(loadServices=False):
 
         sensorinos=[]
 
-        conn = sqlite3.connect(common.Config.getDbFilename())
-        conn.row_factory = common.dict_factory
-        c = conn.cursor()
+        try:
+            conn = sqlite3.connect(common.Config.getDbFilename())
+            conn.row_factory = common.dict_factory
+            c = conn.cursor()
 
-        c.execute("SELECT * from sensorinos")
-        rows = c.fetchall()
+            c.execute("SELECT * from sensorinos")
+            rows = c.fetchall()
 
-        for row in rows:
-            sens=Sensorino( row["name"], row["address"], row["description"], row["owner"], row["location"])
-            sensorinos.append(sens)
-            if(loadServices):
-                sens.loadServices()
+            for row in rows:
+                sens=Sensorino( row["name"], row["address"], row["description"], row["owner"], row["location"])
+                sensorinos.append(sens)
+                if(loadServices):
+                    sens.loadServices()
+        except Exception as e:
+            logger.debug(e)
+            conn.rollback()
+            raise FailToLoadSensorinosError("failed to load sensorinos")
+
 
         return sensorinos
             
@@ -174,7 +176,7 @@ class Service():
             if (self.serviceId==None):
                 logger.debug("INSERT service")
                 status=c.execute("INSERT INTO services ( name,  saddress, instanceId)  VALUES (?,?,?)",
-                    ( self.name,  self.saddress, self.instanceId))
+                    ( self.name,  self.saddress, self.instanceId,))
                 self.serviceId=c.lastrowid
             else:
                 logger.debug("UPDATE service")
@@ -182,14 +184,14 @@ class Service():
                      self.toData())
             conn.commit()
         except Exception as e:
-            print(e)
+            logger.debug(e)
             # Roll back any change if something goes wrong
             conn.rollback()
+            raise FailToSaveServiceError("error while saving service")
 
         return status
 
     def delete(self):
-        status=None
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
             c = conn.cursor()
@@ -197,10 +199,10 @@ class Service():
             status=c.execute("DELETE FROM services WHERE saddress=:saddress AND serviceId=:serviceId LIMIT 1", self.toData())
             conn.commit()
         except Exception as e:
-            print(e)
+            logger.debug(e)
             # Roll back any change if something goes wrong
             conn.rollback()
-        return status
+            raise FailToDeleteService("error while deleting service")
 
     def toData(self):
         return {
@@ -214,22 +216,29 @@ class Service():
 
     @staticmethod
     def getServicesBySensorino(saddress):
-        conn = sqlite3.connect(common.Config.getDbFilename())
-        conn.row_factory = common.dict_factory
-        c = conn.cursor()
-        status=c.execute("SELECT * FROM services WHERE saddress=:saddress ",   {"saddress": saddress})
 
-        rows = c.fetchall()
-        conn.commit()
+        try:
+            conn = sqlite3.connect(common.Config.getDbFilename())
+            conn.row_factory = common.dict_factory
+            c = conn.cursor()
+            status=c.execute("SELECT * FROM services WHERE saddress=:saddress ",   {"saddress": saddress})
 
-        services=[]
-        for srow in rows:
-            service=Service(srow['name'],  saddress, srow['instanceId'], srow['serviceId'])
-            if(None==service):
-                logger.error("failed to load service for sensorino :"+srow)
-            else:
-                service.loadChannels()
-                services.append(service)
+            rows = c.fetchall()
+            conn.commit()
+
+            services=[]
+            for srow in rows:
+                service=Service(srow['name'],  saddress, srow['instanceId'], srow['serviceId'])
+                if(None==service):
+                    logger.error("failed to load service for sensorino :"+srow)
+                else:
+                    service.loadChannels()
+                    services.append(service)
+        except Exception as e:
+            logger.debug(e)
+            # Roll back any change if something goes wrong
+            conn.rollback()
+            raise FailToLoadServicesError("error while loading services of a sensorino")
 
         return services
 
@@ -247,9 +256,9 @@ class Service():
             status = c.execute("SELECT * from dataChannels WHERE serviceId=? ORDER BY channelId", (str(self.serviceId),))
             self.channels = c.fetchall()
         except Exception as e:
-            print(e)
-            # Roll back any change if something goes wrong
+            logger.debug(e)
             conn.rollback()
+            raise FailToLoadChannelsError("fail to load chans")
 
         for chan in self.channels:
             chan['serviceId']=self.serviceId
@@ -273,13 +282,14 @@ class Service():
                     raise FailToSetServiceChannelsError("incomplete or invalid channel info "+str(infos))
 
             for infos in chansInfos:
-                status=c.execute("INSERT INTO dataChannels (serviceId, dataType, type) VALUES (?,?,?)", ( self.serviceId, infos['dataType'], infos['type']))
+                status=c.execute("INSERT INTO dataChannels (serviceId, dataType, type) VALUES (?,?,?)", ( self.serviceId, infos['dataType'], infos['type'],))
 
             conn.commit()
         except Exception as e:
-            print(e)
+            logger.debug(e)
             # Roll back any change if something goes wrong
             conn.rollback()
+            raise FailToSetServiceChannelsError("error while setting channels")
 
         conn.close()
 
@@ -296,30 +306,26 @@ class Service():
 
         if None==channelId:
             logger.debug("no chan specified, filter list")
-            logger.debug(value)
-            for c in self.channels:
-                logger.debug("check chan")
-                logger.debug(c)
             candidates = [c for c in self.channels if c['dataType'] in value]
             if len(candidates)==1:
-                channelId=candidates[0]['channelId']-1
+                channelId=candidates[0]['channelId']
+                logger.debug("auto selected chanid: "+str(channelId))
             else:
-                raise ChannelNotFoundError("unable to find chan: "+len(candidates)+" candidates")
+                logger.debug("failed to find channel among "+str(len(candidates))+" candidates")
+                raise ChannelNotFoundError("unable to find chan candidates")
                 
 
-        logger.debug("we should check sanity: is data corresponding to type ?");
         try:
-            chanInfos=self.channels[channelId] 
-        except: 
-           raise ChannelNotFoundError("failed to load channel "+str(channelId)+" for service sid/instanceId"+self.serviceId+"/"+self.instanceId) 
+            chanInfos=[elem for elem in self.channels if elem['channelId']==channelId][0]
+        except:
+            logger.debug("failed to load channel "+str(channelId)+" for service sid/instanceId"+str(self.serviceId)+"/"+str(self.instanceId))
+            raise ChannelNotFoundError("channel not found")
 
         if (not chanInfos['dataType'] in value):
-            print chanInfos
             raise FailToLogOnChannelError("dataType error")
         if (None == value[chanInfos['dataType']]):
             raise FailToLogOnChannelError("data error")
 
-        status=None
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())
             c = conn.cursor()
@@ -331,27 +337,32 @@ class Service():
                     logger.debug("unable to log on multiple channel service without channelId")
                     return False
 
-            logger.debug("Log data on sensorino"+str(self.saddress)+" service: "+self.name+" chanID: "+str(channelId)+" data:"+str(chanInfos['dataType']))
+            logger.debug("Insert data on sensorino"+str(self.saddress)+" service: "+self.name+" chanID: "+str(channelId)+" data:"+str(chanInfos['dataType']))
             status=c.execute("INSERT INTO dataServicesLog (saddress, serviceId, channelId, value, timestamp) VALUES (?,?,?,?,?) ",
-                     (self.saddress, self.serviceId, channelId, value, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                     (self.saddress, self.serviceId, str(channelId), str(value), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),))
             conn.commit()
         except Exception as e:
-            print(e)
-            # Roll back any change if something goes wrong
+            logger.debug("FailToLogDataError "+str(e))
             conn.rollback()
+            raise FailToLogDataError("something went wrong during data publishing") 
 
         conn.close()
-        return status
            
 
     def getLogs(self, channelId):
-        conn = sqlite3.connect(common.Config.getDbFilename())
-        conn.row_factory = common.dict_factory
-        c = conn.cursor()
+        try:
+            conn = sqlite3.connect(common.Config.getDbFilename())
+            conn.row_factory = common.dict_factory
+            c = conn.cursor()
 
-        c.execute("SELECT value, timestamp FROM dataServicesLog WHERE serviceId=:serviceId AND channelId=:channelId", { 'serviceId': self.serviceId, 'channelId': channelId})
-        rows = c.fetchall()
-        conn.close()
+            c.execute("SELECT value, timestamp FROM dataServicesLog WHERE serviceId=:serviceId AND channelId=:channelId", { 'serviceId': self.serviceId, 'channelId': channelId})
+            rows = c.fetchall()
+            conn.close()
+        except Exception as e:
+            logger.debug(e)
+            conn.rollback()
+            raise FailToLoadChannelLogsError("error while loading logs for channel")
+
         return rows
 
 

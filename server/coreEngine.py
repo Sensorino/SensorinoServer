@@ -40,24 +40,32 @@ class Core:
         """return all the sensorinos that are registered"""
         return self.sensorinos
 
-    def loadSensorinos(self):
+    def loadSensorinos(self, forceReload=False):
         """load all sensorinos stored in db """
-        if (self._sensorinosLoaded):
+        if (self._sensorinosLoaded and not forceReload):
             logger.debug("core started already, won't reload sensorinos")
             return
+        self.sensorinos=[]
         for senso in sensorino.Sensorino.loadAllSensorinos():
             senso.loadServices()
             self.addSensorino(senso)
         self._sensorinosLoaded=True
-        
+    
+    def createSensorino(self, name, address, description, location=None):
+        sens=sensorino.Sensorino( name,  address, description) 
+        self.addSensorino(sens)
+        try:
+            sens.save()
+        except FailToSaveSensorinoError:
+            raise FailToAddSensorinoError("failed to save senso")
+        return sens
+
 
     def addSensorino(self, sensorino):
         """create and add a new sensorino unless there is an id/address conflict """
         if (sensorino in self.sensorinos):
             raise FailToAddSensorinoError("not adding sensorino, already exists")
-        logger.debug("we already have "+str(len(self.sensorinos)))
         for sens in self.sensorinos:
-            logger.debug(sens.address+" vs "+sensorino.address)
             if ( sens.address == sensorino.address):
                 raise FailToAddSensorinoError("not adding sensorino, address duplicated")
         self.sensorinos.append(sensorino)
@@ -78,7 +86,6 @@ class Core:
     def findSensorino(self, saddress=None):
         """return sensorino with given address or id"""
         for sens in self.sensorinos:
-            logger.debug("compare "+sens.address+" with "+saddress)
             if (saddress!=None and sens.address==saddress):
                 return sens
         raise SensorinoNotFoundError("missing")
@@ -147,8 +154,7 @@ class Core:
         except ServiceNotFoundError:
             raise ServiceNotFoundError("unknown")
 
-        logger.debug("not implemented yet")
-        return []
+        return service.getLogs(channelId)
 
 
 

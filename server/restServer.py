@@ -37,11 +37,7 @@ class RestSensorinoList(restful.Resource):
         rparse.add_argument('description', type=str, required=True, help="Please give a brief description for your sensorino", location="json")
         args = rparse.parse_args()
         try:
-            sens=sensorino.Sensorino( args['name'],  args['address'], args['description'])
-            coreEngine.addSensorino(sens)
-            print "let's save sensorino" 
-            sens.save()
-            return sens.address
+            return coreEngine.createSensorino(args['name'],  args['address'], args['description']).address
         except Exception as e:
             return e.message, 500
 
@@ -50,8 +46,7 @@ class RestSensorino(restful.Resource):
     """ Handle sensorino details, update and delete"""
     def get(self, address):
         try:
-            sens=coreEngine.findSensorino(saddress=address)
-            return sens.toData()
+            return coreEngine.findSensorino(saddress=address).toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
 
@@ -103,9 +98,6 @@ class ServiceBySensorino(restful.Resource):
     """ Handle service details, update and delete"""
     def get(self, address, instanceId):
         try:
-            service=coreEngine.findSensorino(saddress=address).getService(instanceId)
-            print "now transform service to data"
-            print service.toData()
             return coreEngine.findSensorino(saddress=address).getService(instanceId).toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
@@ -180,7 +172,7 @@ class Channel(restful.Resource):
 class ChannelLog(restful.Resource):
     def get(self, address, instanceId, channelId):
         try:
-            return coreEngine.getLogs(self, saddress, instanceId, channelId)
+            return coreEngine.getLogs( address, instanceId, channelId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -198,12 +190,12 @@ api.add_resource(ServicesBySensorino, '/sensorinos/<string:address>/services')
 api.add_resource(ServiceBySensorino, '/sensorinos/<string:address>/services/<int:instanceId>')
 api.add_resource(ChannelsByService, '/sensorinos/<string:address>/services/<int:instanceId>/channels')
 api.add_resource(Channel,    '/sensorinos/<string:address>/services/<int:instanceId>/channels/<int:channelId>')
-api.add_resource(ChannelLog, '/sensorinos/<string:address>/services/<int:instanceId>/channel/<int:channelId>/data')
+api.add_resource(ChannelLog, '/sensorinos/<string:address>/services/<int:instanceId>/channels/<int:channelId>/data')
 
 
 
 if __name__ == '__main__':
-    print("sensorino server m0.1")
+    print("sensorino server m0.2")
     coreEngine.start()
     print "engine started"
     app.config['PROPAGATE_EXCEPTIONS'] = True

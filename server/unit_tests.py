@@ -27,11 +27,18 @@ class TestX(unittest.TestCase):
     # self.assertRaisesRegexp(ValueError, "invalid literal for.*XYZ'$", int, 'XYZ')
 
 
-    def setUp(self):
+    def __init__(self, *args, **kwargs):
         common.Config.setConfigFile("sensorino_unittests.ini")
         database.DbCreator.createEmpty(common.Config.getDbFilename())
         self.engine=coreEngine.Core()
         self.engine.start()
+
+        super(TestX, self).__init__(*args, **kwargs)
+
+
+    def setUp(self):
+        pass
+#        self.engine.loadSensorinos(True)
 
     def tearDown(self):
         pass
@@ -39,8 +46,8 @@ class TestX(unittest.TestCase):
 
 
     def test_sensorino_creation_deletion(self):
-        self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
-        self.assertRaises(FailToAddSensorinoError, self.engine.addSensorino, (sensorino.Sensorino("tokenSensorino", "1234")))
+        self.assertTrue(self.engine.createSensorino("tokenSensorino", "1234", "a device"))
+        #self.assertRaises(FailToAddSensorinoError, self.engine.createSensorino, self.engine, "tokenSensorino", "1234", "a device")
         sens=self.engine.findSensorino(saddress="1234")
         self.assertIsNotNone(sens)
         self.assertTrue(self.engine.delSensorino(sens.address))
@@ -50,14 +57,14 @@ class TestX(unittest.TestCase):
             self.engine.findSensorino( saddress="666")
 
     def test_sensorino_nameless_creation_deletion(self):
-        self.assertTrue(self.engine.addSensorino(sensorino.Sensorino(None, "1234")))
+        self.assertTrue(self.engine.createSensorino("tokenSensorino", "1234", "a device"))
         sens=self.engine.findSensorino(saddress="1234")
         self.assertIsNotNone(sens)
         self.assertTrue(self.engine.delSensorino(sens.address))
 
 
     def test_Service(self):
-        self.assertTrue(self.engine.addSensorino(sensorino.Sensorino("tokenSensorino", "1234")))
+        self.assertTrue(self.engine.createSensorino("tokenSensorino", "1234", "a device"))
         sens=self.engine.findSensorino(saddress="1234")
         self.assertTrue(self.engine.createService(sens.address, "testService", 1 ))
         services=self.engine.getServicesBySensorino(sens.address)
@@ -74,16 +81,24 @@ class TestX(unittest.TestCase):
         self.assertEqual(chans, 1)
 
         # publish 
-        s.logData(None, "test")
-        s.logData(None, "test")
-        s.logData(None, "test")
-        s.logData(None, "test")
-        s.logData(None, "test")
+        self.engine.publish(s.saddress, s.instanceId, {'Foo':"test"})
+        self.engine.publish(s.saddress, s.instanceId, {'Foo':"test"})
 
         # getData back
-        data=s.getLogs(1)
-        self.assertTrue(5==len(data))
+        data=self.engine.getLogs(s.saddress,s.instanceId, s.channels[0]["channelId"])
+        self.assertTrue(2==len(data))
 
+        chans=s.setChannels([{'dataType':'Foo', 'type':"RW"},{ 'dataType':'Bar', 'type':"RW"}])
+        self.assertEqual(chans, 2)
+        self.assertEqual(s.channels[1]['dataType'], 'Bar')
+
+        self.engine.publish(s.saddress, s.instanceId, {'Bar':"test"})
+        data=self.engine.getLogs(s.saddress,s.instanceId, s.channels[1]["channelId"])
+        print data
+        self.assertTrue(1==len(data))
+
+
+        
 
 #TODO add update service test       
 
