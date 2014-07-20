@@ -265,6 +265,13 @@ class Service():
 
         return len(self.channels)
 
+    def getChannel(self, channelId):
+        try:
+            return [elem for elem in self.channels if elem['channelId']==channelId][0]
+        except:
+            raise ChannelNotFoundError("unable to find channel with given id")
+    
+
 
     def setChannels(self, chansInfos):
         status = None
@@ -316,7 +323,7 @@ class Service():
                 
 
         try:
-            chanInfos=[elem for elem in self.channels if elem['channelId']==channelId][0]
+            chanInfos=self.getChannel(channelId)
         except:
             logger.debug("failed to load channel "+str(channelId)+" for service sid/instanceId"+str(self.serviceId)+"/"+str(self.instanceId))
             raise ChannelNotFoundError("channel not found")
@@ -325,6 +332,8 @@ class Service():
             raise FailToLogOnChannelError("dataType error")
         if (None == value[chanInfos['dataType']]):
             raise FailToLogOnChannelError("data error")
+
+        value=value[chanInfos['dataType']]
 
         try:
             conn = sqlite3.connect(common.Config.getDbFilename())

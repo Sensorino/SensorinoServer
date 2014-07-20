@@ -30,9 +30,9 @@ sensorinoApp.config(['$routeProvider', function($routeProvider) {
             templateUrl: 'partials/serviceDataLog.html',
             controller: 'ServiceDataLogCtrl'
         }).
-        when('/sensorino/:sId/actuatorServices/:serviceId', {
-            templateUrl: 'partials/serviceDetails.html',
-            controller: 'ServiceDetailsCtrl'
+        when('/sensorino/:sId/services/:serviceId/channels/:channelId/charts', {
+            templateUrl: 'partials/serviceCanalCharts.html',
+            controller: 'ServiceCanalChartsCtrl'
         }).
         otherwise({
             redirectTo: '/sensorinos'
@@ -193,46 +193,120 @@ sensorinoApp.controller('ServiceDetailsCtrl',  function($scope, $routeParams, Re
     $scope.currentState = 'on';
     $scope.validStates = [ 'on', 'off', 'blink', "failed"];
 
-
 });
 
 
-sensorinoApp.controller('GraphsCtrl',  function($scope, $routeParams, Restangular) {
+sensorinoApp.controller('SalesController',  function($scope, $routeParams, $compile, Restangular) {
 
-    // 'pie', 'bar', 'line', 'point', 'area'
-    $scope.chartType = 'line';
+    Restangular.setBaseUrl("/");
+    $scope.graphData=[];
+//    var RServicesData=Restangular.all("sensorinos/"+$routeParams.sId+"/services/"+$routeParams.serviceId+"/channels/"+$routeParams.channelId+"/data");
+    var RServicesData=Restangular.all("sensorinos/10/services/3/channels/1/data");
+    $scope.loadData=function(){
+            RServicesData.getList().then(function(logs){
+                $scope.graphData=logs;
+        console.log("got data");
+        var template='<div linear-chart chart-data="graphData"></div>'
+        angular.element(document.body).append($compile(template)($scope));
 
-    $scope.config = {
-        labels: false,
-        title : "Not Products",
-        legend : {
-            display:true,
-            position:'left'
+
+            });
         }
-    }
-
-    $scope.data = {
-        series: ['Sales', 'Income', 'Expense', 'Laptops', 'Keyboards'],
-        data : [{
-                    x : "Sales",
-                    y: [100,500, 0],
-                    tooltip:"this is tooltip"
-                },
-                {
-                    x : "Not Sales",
-                    y: [300, 100, 100]
-                },
-                {
-                    x : "Tax",
-                    y: [351]
-                },
-                {
-                    x : "Not Tax",
-                    y: [54, 0, 879]
-                }]
-    }
-
-
+        $scope.loadData()
 });
+
+
+// http://bl.ocks.org/marufbd/7191340 has a nice d3 irregular chart stuff that we could use
+
+            sensorinoApp.directive('linearChart', function($window){
+               return{
+                  restrict:'EA',
+                  template:"<svg width='850' height='400'></svg>",
+                   link: function(scope, elem, attrs){
+                       var graphDataToPlot=scope[attrs.chartData];
+                       var padding = 60;
+                       var pathClass="path";
+                       var xScale, yScale, xAxisGen, yAxisGen, lineFun;
+
+                       var d3 = $window.d3;
+                       var rawSvg=elem.find('svg');
+                       var svg = d3.select(rawSvg[0]);
+
+                       function setChartParameters(){
+
+                           xScale = d3.time.scale()
+                               .domain([new Date(graphDataToPlot[0].timestamp.replace(" ","T")), new Date(graphDataToPlot[graphDataToPlot.length-1].timestamp.replace(" ","T"))])
+                               .range([0, 850-padding]);
+                    
+
+                           yScale = d3.scale.linear()
+                               .domain([0, d3.max(graphDataToPlot, function (d) {
+                                   return d.value.Speed;
+                               })])
+                               .range([ 340, 60]);
+                            
+
+
+                           xAxisGen = d3.svg.axis()
+                               .scale(xScale)
+                               .orient("bottom")
+            //                   .ticks(d3.time.hours, 2)
+                               .tickSize(10)
+                               .tickFormat(d3.time.format('%b %d %H:%M:%S'))
+                               .tickPadding(8);
+
+                           yAxisGen = d3.svg.axis()
+                               .scale(yScale)
+                               .orient("left")
+                                .tickSize(0)
+                               .ticks(10)
+                               .tickPadding(8);
+
+
+                           lineFun = d3.svg.line()
+                               .x(function (d) {
+                                    console.log(d.timestamp);
+                                   return xScale(new Date(d.timestamp.replace(" ","T")));
+                               })
+                               .y(function (d) {
+                                    console.log(d.value);
+                                   return yScale(d.value.Speed);
+                               })
+                               .interpolate("basis");
+
+
+                       }
+
+
+                    
+                     function drawLineChart() {
+
+                           setChartParameters();
+
+                           svg.append("svg:g")
+                               .attr("class", "x axis")
+                               .attr("transform", "translate(60,340)")
+                               .call(xAxisGen);
+
+                           svg.append("svg:g")
+                               .attr("class", "y axis")
+                               .attr("transform", "translate(60,0)")
+                               .call(yAxisGen);
+
+                           svg.append("svg:path")
+                               .attr({
+                                   d: lineFun(graphDataToPlot),
+                                   "stroke": "blue",
+                                   "stroke-width": 2,
+                                   "fill": "none",
+                                   "class": pathClass
+                               })
+                              .attr("transform", "translate(60,0)");
+                       }
+
+                       drawLineChart();
+                   }
+               }});
+
 
 

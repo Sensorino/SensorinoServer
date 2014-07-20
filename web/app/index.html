@@ -7,6 +7,7 @@
     <title>Sensorino Central</title>
     <link rel="stylesheet" href="css/btrp.min.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/chart.css">
     <script src='js/jquery.min.js'></script>
     <script src="lib/angular/angular.js"></script>
     <script src="lib/angular/angular-route.js"></script>
@@ -41,7 +42,13 @@
         </div>
     </div>
 
-    <div ng-view class="container-fluid"></div>      
+    <div ng-view class="container-fluid"></div>    
+<div class="col-sm-3 col-md-2 sidebar">xx</div>
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main"  ng-controller="SalesController">
+  <h1>Today's Sales Chart</h1>
+  <div linear-chart chart-data="salesData"></div>
+</div>
+
 
 </body>
 </html>

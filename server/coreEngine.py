@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import logging
 import threading
+from threading import Timer
 import datetime
 import ConfigParser
 import sensorino
@@ -157,19 +158,19 @@ class Core:
         return service.getLogs(channelId)
 
 
-
-    def setState(self, saddress, serviceId, state):
+    def setState(self, saddress, serviceId, channelId, state):
         """to setState we should send command and wait for the publish back"""
         sens=self.findSensorino(saddress=saddress)
         if (sens==None):
-            logger.warn("unknown sensorino")
-            return None
+            raise SensorinoNotFoundError("unable to set state: no sensorino found")
         service=sens.getService(serviceId)
         if (service==None):
-            logger.warn("unknown service")
-            return None
+            raise ServiceNotFoundError("unable to set state: no service found")
+        chan=service.getChannel(channelId)
         
-        self.mqtt.mqttc.publish("commands",  { "set" : {"saddress":sadress, "serviceID":serviceId, "state":state}})
+        
+        self.mqtt.mqttc.publish("commands",  { "set" : {"saddress":saddress, "serviceID":serviceId, "state":state, "channelId":channelId}})
+        timer=Timer(1,self.request, args=[saddress, serviceId]) # TODO cancel active timers if we receive a publish ?
         return True
 
     

@@ -25,17 +25,11 @@ logger.addHandler(ch)
 
 
 
-
-
-
 httplib2.debuglevel     = 0
 http                    = httplib2.Http()
 content_type_header     = "application/json"
 headers                 = {'Content-type': 'application/json'}
 baseUrl                 = "http://"+common.Config.getRestServerAddress()+":"+str(common.Config.getRestServerPort())
-
-
-
 
 
 
@@ -48,8 +42,6 @@ class Protocol:
     on_set(self, address, serviceID, serviceInstanceID, state)
     on_request(self, address, serviceID, serviceInstanceID)
     on_error(self, address, type, data)
-
-
 
     """
 
