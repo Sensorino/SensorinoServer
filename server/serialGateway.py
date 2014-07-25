@@ -36,7 +36,7 @@ httplib2.debuglevel     = 0
 http                    = httplib2.Http()
 content_type_header     = "application/json"
 headers = {'Content-type': 'application/json'}
-baseUrl                 = common.Config.getRestServer()+"/sensorinos/"
+baseUrl                 = common.Config.getRestServerAddress()+":"+str(common.Config.getRestServerPort())+"/sensorinos/"
 
 
 
@@ -70,7 +70,6 @@ class SerialGateway:
         try:
 #            response, content = http.request( baseUrl+"/address/"+str(serviceID)+"/"+str(serviceInstanceID), 'POST', json.dumps(data), headers=content_type_header)
             print("post to rest")
-            if 
         except Exception, e:
             print(e)
             traceback.print_stack()
@@ -92,9 +91,10 @@ class SerialGateway:
     def startSerial(self):
         if self.port==None:
             if self.portFile==None:
-                for device in SerialGateway.windowsPossibleSerialPorts:
+                for device in SerialGateway.linuxPossibleSerialPorts:
                     try:
-                        self.port = serial.Serial(device, 57600)
+                        self.port = serial.Serial(device, 115200)
+                        print("on "+device)
                         break
                     except:
                         logger.debug("arduino not on "+device)
@@ -112,7 +112,9 @@ class SerialGateway:
         self.startSerial()
         self.startMqtt()
         while True:
-            if self.protocol.treatMessage(self.port.readline()):
+            msg=self.port.readline()
+            print msg
+            if self.protocol.treatMessage(msg):
                 print "message ok"
             else:
                 print "message ko"

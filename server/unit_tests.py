@@ -47,7 +47,7 @@ class TestX(unittest.TestCase):
 
     def test_sensorino_creation_deletion(self):
         self.assertTrue(self.engine.createSensorino("tokenSensorino", "1234", "a device"))
-        #self.assertRaises(FailToAddSensorinoError, self.engine.createSensorino, self.engine, "tokenSensorino", "1234", "a device")
+        self.assertRaises(FailToAddSensorinoError, self.engine.createSensorino, self.engine, "tokenSensorino", "1234", "a device")
         sens=self.engine.findSensorino(saddress="1234")
         self.assertIsNotNone(sens)
         self.assertTrue(self.engine.delSensorino(sens.address))
@@ -97,6 +97,9 @@ class TestX(unittest.TestCase):
         print data
         self.assertTrue(1==len(data))
 
+
+        # now publish on unknown service
+        self.assertRaises(ServiceNotFoundError, self.engine.publish, s.saddress, 665, {'Bar':"test"})
 
         
 

@@ -87,7 +87,7 @@ class Protocol:
                     print "content: "+str(content);
         
                         
-                elif( "dataType" in message):
+                elif("dataType" in message):
                     
                     print "now declare service"
 
@@ -187,7 +187,7 @@ class Protocol:
                 if(self.on_request!=None):
                     self.on_request(Protocol.serializeAddress(msg["address"]), msg["serviceID"], msg['serviceInstanceID'])
                     return True
-            elif ("error" == message["type"]):
+            elif("error" == message["type"]):
                 if (self.on_error!=None):
                     self.on_error(Protocol.serializeAddress(msg["address"]), msg["type"], msg["data"])
                     return True
