@@ -40,6 +40,7 @@ content_type_header     = "application/json"
 headers = {'Content-type': 'application/json'}
 baseUrl                 = common.Config.getRestServerAddress()+":"+str(common.Config.getRestServerPort())+"/sensorinos/"
 
+gateway=None
 
 
 class SerialGateway:
@@ -62,22 +63,23 @@ class SerialGateway:
 
     @staticmethod
     def on_mqtt_message(mqtt, obj, msg):
+        print mqtt
         """main server sends message on mosquitto"""
         logger.debug("msg from mosquitto: "+str(msg))
         if("commands" == msg.topic):
             try:
                 command=json.dumps(msg.payload)
                 if("set" in command):
-                    self.port.write(json.dumps(command))
+                    gateway.writeOnSerial(json.dumps(command))
                 elif("request" in command):
-                    self.port.write(json.dumps(command))
+                    gateway.writeOnSerial(json.dumps(command))
                 else:
                     logger.warn("unhandled message from mqtt: "+json.dumps(command))
             except:
                 logger.debug("failed to decode "+msg.payload)
 
         elif ("serialOut" == msg.topic):
-            self.processMessage(msg.payload)
+            gateway.processMessage(msg.payload)
         else:
             logger.warn("unknown mqtt channel")
 
@@ -92,6 +94,9 @@ class SerialGateway:
     def setSerialPort(self, port):
         self.port=port
 
+    def writeOnSerial(self, msg):
+        gateway.port.write(msg)
+        self.mqtt.mqttc.publish("serialOut", msg)
 
     def startSerial(self):
         if self.port==None:
@@ -111,8 +116,8 @@ class SerialGateway:
 
     def startMqtt(self):
         self.mqtt=mqttThread.MqttThread()
-        self.mqtt.mqttc.on_connect = on_connect
-        self.mqtt.mqttc.on_subscribe = on_subscribe
+        self.mqtt.mqttc.on_connect = self.on_connect
+        self.mqtt.mqttc.on_subscribe = self.on_subscribe
         self.mqtt.mqttc.on_message= self.on_mqtt_message
         self.mqtt.start()
         time.sleep(1)

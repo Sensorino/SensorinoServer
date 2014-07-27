@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
 from flask import Flask
 from flask.ext import restful
 from flask import json
