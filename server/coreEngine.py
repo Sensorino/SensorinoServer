@@ -129,9 +129,8 @@ class Core:
             sens=self.findSensorino(saddress=saddress)
         except SensorinoNotFoundError:
             logger.warn("logging data from unknown sensorino is not allowed (yet)")
-            payload = { "sensorino": {"saddress": saddress, "address": None}}
-
-            self.mqtt.mqttc.publish("discover", json.dumps(payload))
+            payload = { "from": 0, "to": saddress, "type": "request", "serviceId": 0 }
+            self.mqtt.mqttc.publish("request", json.dumps(payload))
             return False
         service=None
         try:

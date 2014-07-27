@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import protocol
 import mqttThread
 import common
@@ -49,37 +51,40 @@ class SerialGateway:
 
     windowsPossibleSerialPorts=['\\.\COM1', '\\.\COM2', '\\.\COM3', '\\.\COM4'] # TODO : complete list
 
+    @staticmethod
+    def on_subscribe(mosq, obj, mid, qos_list):
+        logger.debug("Subscribe with mid "+str(mid)+" received.")
 
+    @staticmethod
+    def on_connect(mosq, obj, rc):
+        if rc == 0:
+            logger.debug("Connected successfully.")
+
+    @staticmethod
     def on_mqtt_message(mqtt, obj, msg):
         """main server sends message on mosquitto"""
-        logger.debug("msg from mosquitto: "+json.dumps(msg))
+        logger.debug("msg from mosquitto: "+str(msg))
         if("commands" == msg.topic):
-            command=msg.payload
-            if("set" in command):
-                self.port.write(json.dumps(command))
-            elif("control" in command):
-                self.port.write(json.dumps(command))
-            else:
-                logger.warn("unhandled message from mqtt: "+json.dumps(command))
+            try:
+                command=json.dumps(msg.payload)
+                if("set" in command):
+                    self.port.write(json.dumps(command))
+                elif("request" in command):
+                    self.port.write(json.dumps(command))
+                else:
+                    logger.warn("unhandled message from mqtt: "+json.dumps(command))
+            except:
+                logger.debug("failed to decode "+msg.payload)
+
+        elif ("serialOut" == msg.topic):
+            self.processMessage(msg.payload)
         else:
             logger.warn("unknown mqtt channel")
 
 
-    def on_publish(prot, address, serviceID, data):
-        """protocol has decoded a publish event on (serial port), we should talk to main server"""
-        try:
-#            response, content = http.request( baseUrl+"/address/"+str(serviceID)+"/"+str(serviceInstanceID), 'POST', json.dumps(data), headers=content_type_header)
-            print("post to rest")
-        except Exception, e:
-            print(e)
-            traceback.print_stack()
-
-
     def __init__(self, portFile=None):
         self.protocol=protocol.Protocol()
-        self.protocol.on_publish=self.on_publish
-        self.mqtt=thread=mqttThread.MqttThread()
-        self.mqtt.on_message=self.on_mqtt_message
+        self.mqtt=None
         self.portFile=portFile
         self.port=None
 
@@ -91,34 +96,45 @@ class SerialGateway:
     def startSerial(self):
         if self.port==None:
             if self.portFile==None:
+                logger.debug("no portFile was specified, scan for a valid serial")
                 for device in SerialGateway.linuxPossibleSerialPorts:
                     try:
                         self.port = serial.Serial(device, 115200)
-                        print("on "+device)
+                        logger.debug("opened serial port (hopefully it's the base): "+device)
+                        logger.debug("you can specify port on command line next time")
                         break
                     except:
-                        logger.debug("arduino not on "+device)
+                        logger.debug("no serial/arduino on "+device)
             else:
                 self.port = serial.Serial(port, 57600)
 
 
     def startMqtt(self):
-        self.mqtt.mqttc.connect(common.Config.getMqttServer(), 1883, 60)
-        self.mqtt.mqttc.subscribe("commands", 0)
+        self.mqtt=mqttThread.MqttThread()
+        self.mqtt.mqttc.on_connect = on_connect
+        self.mqtt.mqttc.on_subscribe = on_subscribe
+        self.mqtt.mqttc.on_message= self.on_mqtt_message
         self.mqtt.start()
-       
+        time.sleep(1)
+        self.mqtt.mqttc.subscribe("commands", 0)
+        self.mqtt.mqttc.subscribe("serialOut", 0)
+
 
     def start(self):
-        self.startSerial()
         self.startMqtt()
+        self.startSerial()
         while True:
             msg=self.port.readline()
-            print msg
-            if self.protocol.treatMessage(msg):
-                print "message ok"
-            else:
-                print "message ko"
+            self.mqtt.mqttc.publish("serialIn",  msg)
+            self.processMessage(msg)
 
+
+    def processMessage(self, msg):
+        if self.protocol.treatMessage(msg):
+            print "message ok: "+msg
+        else:
+            print "message ko: "+msg
+       
 
 
 class FakeSerial:
