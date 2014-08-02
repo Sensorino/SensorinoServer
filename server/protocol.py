@@ -13,14 +13,8 @@ logger.setLevel(logging.DEBUG)
 # create console handler and set level to debug
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
-
-# create formatter
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# add formatter to ch
 ch.setFormatter(formatter)
-
-# add ch to logger
 logger.addHandler(ch)
 
 
@@ -34,8 +28,6 @@ baseUrl                 = "http://"+common.Config.getRestServerAddress()+":"+str
 
 
 
-
-
 class Protocol:
     """
     on_publish(self, address, serviceID, serviceInstanceID, data)
@@ -45,11 +37,6 @@ class Protocol:
 
     """
 
-    def __init__(self):
-        self.on_publish=None
-        self.on_set=None
-        self.on_request=None
-        self.on_error=None
 
     @staticmethod
     def serializeAddress(address):
@@ -57,6 +44,9 @@ class Protocol:
 
 
     def treatMessage(self, jsonString):
+
+        logger.debug("treat message in proto: "+jsonString)
+
         try:
             message=json.loads(jsonString)
             if ("type" not in message):
@@ -69,10 +59,8 @@ class Protocol:
                 #service list from sensorino with address 10
                 # { "from": 10, "to": 0, "type": "publish", "serviceId": [ 0, 1 ] },
 
-                print "serviceid: "+str(message["serviceId"])
-
                 if ( "serviceId" in message and  isinstance(message["serviceId"], list)):
-                    print "now declare sensorino";
+                    logger.debug("declare sensorino");
                     sens={
                         'address'   : message["from"],
                         'name'      : 'new sensorino',
@@ -83,14 +71,13 @@ class Protocol:
                         'POST',
                         json.dumps(sens),
                         headers)
-                    print "response: "+str(response);
-                    print "content: "+str(content);
+
+                    if ('200'!=response['status']):
+                        raise Exception("failed to declare sensorino, server answer :"+str(response)+"/"+str(content))
         
                         
                 elif("dataType" in message):
                     
-                    print "now declare service"
-
                     service={
                         "name": "new service",
                         "instanceId":message['serviceId']
@@ -101,24 +88,15 @@ class Protocol:
                         json.dumps(service),
                         headers)
 
-                    print "response: "+str(response);
-                    print "content: "+str(content);
-                
-                    if ('404'==response['status']):
-                        print "not there"
-                        return False
-                    if ('200'==response['status']):
-                        print "ok"
-                    else:
-                        print "some error ?"
+
+                    if ('200'!=response['status']):
+                        raise Exception("failed to declare sensorino, server answer :"+str(response)+"/"+str(content))
                     
                     sens=content
-
                     channels=[]
 
                     if ( isinstance(message["dataType"], list)):
                         # { "dataType": [ "temperature", "temperature", "switch", "switch", ], "count": [ 2, 2 ] } 
-                        print "this is multi channel service"
                         position=0
                         publishers=message['count'][0]
                         settables=message['count'][1]
@@ -135,7 +113,6 @@ class Protocol:
 
                     else:
                         # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
-                        print "single channel service"
                         chanType="publisher"
                         if message['count'][1]!=0:
                             chanType="settable"
@@ -146,19 +123,20 @@ class Protocol:
                         })
 
                     response, content = http.request(
-                        baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(service['instanceId'])+"/channels",
+                        baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(message['serviceId'])+"/channels",
                         'POST',
                         json.dumps({'channels':channels}),
                         headers)
-                    print "response: "+str(response);
-                    print "content: "+str(content);
+
+                    if ('200'!=response['status']):
+                        raise Exception("failed to declare sensorino, server answer :"+str(response)+"/"+str(content))
 
 
                 else:
                     # publish from a service 1 of type switch on sensorino with address 10
                     # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
 
-                    print "data publish"
+                    logger.debug("data publish")
 
                     url= baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(message["serviceId"])+"/channels"
                     if 'from' in message: del message['from']
@@ -170,37 +148,33 @@ class Protocol:
                         'PUT',
                         json.dumps({'data':message}),
                         headers)
-                    print "response: "+str(response);
-                    print "content: "+str(content);
 
-
+                    if ('200'!=response['status']):
+                        raise Exception("failed to declare sensorino, server answer :"+str(response)+"/"+str(content))
 
                 return True
 
 
-
             elif("set" == message["type"]):
-                if(self.on_set!=None):
-                    self.on_set(Protocol.serializeAddress(msg["address"]), msg["serviceID"], msg['serviceInstanceID'], msg["state"])
-                    return True
+                logger.debug("set message from a sensorino, don't know what to do")
+                return False
             elif("request" == message["type"]):
-                if(self.on_request!=None):
-                    self.on_request(Protocol.serializeAddress(msg["address"]), msg["serviceID"], msg['serviceInstanceID'])
-                    return True
+                logger.debug("request message from a sensorino, don't know what to do")
+                return False
             elif("error" == message["type"]):
-                if (self.on_error!=None):
-                    self.on_error(Protocol.serializeAddress(msg["address"]), msg["type"], msg["data"])
-                    return True
+                #TODO who should receive this ?
+                logger.warn(json.dumps(message)) 
+                return False
             else:
                 logger.error("unhandled message "+message)
-                return False
+                raise Exception("unhandled message type : "+message["type"])
                     
         except Exception, e:
               
             logger.error("fail to treat json message "+str(jsonString))
             logger.error(e)
 
-            print repr(traceback.format_stack())
+            logger.debug(repr(traceback.format_stack()))
 
             return False
 

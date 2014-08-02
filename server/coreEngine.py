@@ -137,8 +137,8 @@ class Core:
             service=sens.getService(instanceId)
         except ServiceNotFoundError:
             logger.warn("logging data from unknown service is not allowed")
-            payload=  { "service": {"saddress": saddress, "instanceId":instanceId}}
-            self.mqtt.mqttc.publish("discover", json.dumps(payload))
+            payload = { "from": 0, "to": saddress, "type": "request", "serviceId": 0 }
+            self.mqtt.mqttc.publish("serialOut", json.dumps(payload))
             raise ServiceNotFoundError("unable to publish on unknown service, mqttt clients will receive some notice")
 
         return service.logData(data, channelId)

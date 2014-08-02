@@ -11,14 +11,25 @@ import sys
 sys.path.append("..")
 import protocol
 import json
+import mqttThread
+import time
+
+mode = "mqtt"
 
 
 def main():
-    prot=protocol.Protocol()
     json_data = open(sys.argv[1])
     data=json_data.read()
     print "treat :"+data
-    print prot.treatMessage(data)
+
+    if "mqtt" == mode:
+        mThread=mqttThread.MqttThread()
+        mThread.start()
+        time.sleep(1)
+        mThread.mqttc.publish("serialOut", data)
+    else:
+        prot=protocol.Protocol()
+        print prot.treatMessage(data)
 
 
 

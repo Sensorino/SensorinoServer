@@ -3,7 +3,7 @@
 /* Controllers */
 
 
-var sensorinoApp = angular.module('sensorinoApp', ['restangular', 'ngRoute', 'angularCharts' ]);
+var sensorinoApp = angular.module('sensorinoApp', ['restangular', 'ngRoute', 'notifications' ]);
 //var sensorinoApp = angular.module('sensorinoApp', []);
 
 sensorinoApp.config(['$httpProvider', function($httpProvider) {
@@ -41,7 +41,7 @@ sensorinoApp.config(['$routeProvider', function($routeProvider) {
 
 
 
-sensorinoApp.controller('MainCtrl', function($scope, Restangular) {
+sensorinoApp.controller('MainCtrl', function($scope, $notification, Restangular) {
 		Restangular.setBaseUrl("/")
 		var Rsensorinos =  Restangular.all('sensorinos');
 
@@ -86,6 +86,9 @@ sensorinoApp.controller('MainCtrl', function($scope, Restangular) {
 
         var m = new Mosquitto();
         m.onmessage = function(topic, payload, qos){
+        $notification.info(topic, payload);
+            
+
             var p = document.createElement("p");
             p.innerHTML = "topic:"+topic+" pl: "+payload;
             document.getElementById("debug").appendChild(p);
@@ -105,8 +108,9 @@ sensorinoApp.controller('MainCtrl', function($scope, Restangular) {
         };
 
 
-//        m.connect("ws://91.121.149.19/mqtt");
- //       m.subscribe("discover", 0);
+        m.connect("ws://127.0.0.1:8080/mqtt", 1);
+        m.subscribe("discover", 0);
+        m.subscribe("serialOut", 0);
 
 });
 

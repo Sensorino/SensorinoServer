@@ -5,13 +5,23 @@ import mqttThread
 import common
 
 import datetime
-import httplib2
 import json
 import logging
 import serial
 import sys
 import time
 import traceback
+
+"""
+ This program connects to usb serial port,
+ 3 mqtt channels are used 
+ 'serialIn' is used to forward raw data received on serial port (basically for logging/debug)
+ 'commands' messages come from main server as dict and are converted to json and the forwarded to 'serialOut' channel
+ 'serialOut' messages received are directly printed to serial port (this is direct json control)
+
+Message from base are translated to Rest actions through http
+
+"""
 
 
 # create logger with 'spam_application'
@@ -32,13 +42,6 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
-
-
-httplib2.debuglevel     = 0
-http                    = httplib2.Http()
-content_type_header     = "application/json"
-headers = {'Content-type': 'application/json'}
-baseUrl                 = common.Config.getRestServerAddress()+":"+str(common.Config.getRestServerPort())+"/sensorinos/"
 
 gateway=None
 
@@ -63,10 +66,9 @@ class SerialGateway:
 
     @staticmethod
     def on_mqtt_message(mqtt, obj, msg):
-        print mqtt
         """main server sends message on mosquitto"""
         logger.debug("msg from mosquitto: "+str(msg))
-        if("commands" == msg.topic):
+        if("commands" == msg.topic): # commands channel is seperate from serial out to allow for "clever" actions
             try:
                 command=json.dumps(msg.payload)
                 if("set" in command):
@@ -79,16 +81,21 @@ class SerialGateway:
                 logger.debug("failed to decode "+msg.payload)
 
         elif ("serialOut" == msg.topic):
-            gateway.processMessage(msg.payload)
+            # quick check on paylod
+            if isinstance(msg.payload, dict):
+                gateway.writeOnSerial(json.dumps(msg.payload))
+            else:
+                gateway.writeOnSerial(msg.payload)
         else:
             logger.warn("unknown mqtt channel")
 
 
-    def __init__(self, portFile=None):
+    def __init__(self, portFile=None, speed=115200):
         self.protocol=protocol.Protocol()
+        self.speed=speed
         self.mqtt=None
-        self.portFile=portFile
         self.port=None
+        self.portFile=portFile
 
 
     def setSerialPort(self, port):
@@ -96,7 +103,6 @@ class SerialGateway:
 
     def writeOnSerial(self, msg):
         gateway.port.write(msg)
-        self.mqtt.mqttc.publish("serialOut", msg)
 
     def startSerial(self):
         if self.port==None:
@@ -104,14 +110,20 @@ class SerialGateway:
                 logger.debug("no portFile was specified, scan for a valid serial")
                 for device in SerialGateway.linuxPossibleSerialPorts:
                     try:
-                        self.port = serial.Serial(device, 115200)
-                        logger.debug("opened serial port (hopefully it's the base): "+device)
-                        logger.debug("you can specify port on command line next time")
+                        port = serial.Serial(device, self.speed)
+                        self.setSerialPort(port)
+                        logger.debug("opened serial port at "+str(self.speed)+" (hopefully it's the base): "+device)
+                        logger.debug("you can specify port on command line next time if you need")
                         break
                     except:
                         logger.debug("no serial/arduino on "+device)
             else:
-                self.port = serial.Serial(port, 57600)
+                self.setSerialPort(serial.Serial(port, self.speed))
+
+        print str(self.port)
+        if None==self.port:
+            logger.fatal("no serial port in use")
+            sys.exit(1)
 
 
     def startMqtt(self):
@@ -131,7 +143,12 @@ class SerialGateway:
         while True:
             msg=self.port.readline()
             self.mqtt.mqttc.publish("serialIn",  msg)
-            self.processMessage(msg)
+            try:
+                if not self.processMessage(msg):
+                    logger.debug("protocol did not treat message : "+msg)
+            except:
+                logger.warn("failure !")
+                
 
 
     def processMessage(self, msg):
@@ -188,10 +205,13 @@ class FakeSerial:
 if __name__ == '__main__':
 
     port=None
-    if len(sys.argv)==2:
+    speed=115200
+    if len(sys.argv)>1:
         port=sys.argv[1]
+    if len(sys.argv)>2:
+        speed=int(sys.argv[2])
 
-    gateway=SerialGateway(port)
+    gateway=SerialGateway(port, speed)
 
     if "debug"==port:
         gateway.setSerialPort(FakeSerial())        
