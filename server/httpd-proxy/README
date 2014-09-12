@@ -1,11 +1,11 @@
-flask restful cors extension has issues with CORS
+flask restful cors extension has issues with CORS.
 It's easier to have eveything served from the same server/port
 
-We use lighttpd that also provides a websocket "gateway/proxy" to mosquitto mqtt server
-
-You should use a patched lighttpd  
-
+We use lighttpd that also provides a websocket "gateway/proxy" to
+mosquitto mqtt server.  Up to at least lighttpd-1.4.35 mod_websocket
+is not included in the vanilla source repository and needs patching
+as detailed in https://github.com/nori0428/mod_websocket.  Good luck.
 ---
-NOTE: we considered using nginx, but lighttpd  websocket proxying was easier
+NOTE: we considered using nginx, but lighttpd websocket proxying was easier
 We could use nginx : http://enable-cors.org/server_nginx.html
 The nginx conf in this directoty can also be used (launch start.sh)
