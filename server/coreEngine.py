@@ -191,19 +191,19 @@ class Core:
 
     def _createMqttClient(self):
         """confire mqtt client and create thread for it"""
-        def mqtt_on_connect(mosq, obj, rc):
-            mosq.subscribe("sensorino", 0)
+        def mqtt_on_connect(obj, rc):
+            self.mqtt.mqttc.subscribe("sensorino", 0)
 
-        def mqtt_on_message(mosq, obj, msg):
+        def mqtt_on_message(obj, msg):
             print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
 
-        def mqtt_on_publish(mosq, obj, mid):
+        def mqtt_on_publish(obj, mid):
             print("mid: "+str(mid))
 
-        def mqtt_on_subscribe(mosq, obj, mid, granted_qos):
+        def mqtt_on_subscribe(obj, mid, granted_qos):
             print("Subscribed: "+str(mid)+" "+str(granted_qos))
 
-        def mqtt_on_log(mosq, obj, level, string):
+        def mqtt_on_log(obj, level, string):
             print(string)
 
         mqtt=mqttThread.MqttThread()

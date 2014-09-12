@@ -11,11 +11,11 @@ import json
 def on_mqtt_message(mqtt, obj, msg):
     print str(msg)
 
-def on_connect(mosq, obj, rc):
+def on_connect(obj, rc, x=None):
     if rc == 0:
         print("Connected successfully.")
 
-def on_subscribe(mosq, obj, mid, qos_list):
+def on_subscribe(obj, mid, qos_list):
     print("Subscribe with mid "+str(mid)+" received.")
 
 

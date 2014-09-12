@@ -10,11 +10,12 @@ class MqttThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.daemon = True
-        self.mqttc=mosquitto.Mosquitto()
+        self.mqttc=mosquitto.Mosquitto('sensorino')
 
     def run (self):
         # TODO add a mecanism to handle reconnection
         self.mqttc.connect(common.Config.getMqttServer(), 1883, 60)
-        self.mqttc.loop_forever()
+	while 1:
+            self.mqttc.loop()
 
 

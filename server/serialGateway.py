@@ -56,16 +56,16 @@ class SerialGateway:
     windowsPossibleSerialPorts=['\\.\COM1', '\\.\COM2', '\\.\COM3', '\\.\COM4'] # TODO : complete list
 
     @staticmethod
-    def on_subscribe(mosq, obj, mid, qos_list):
+    def on_subscribe(obj, mid, qos_list):
         logger.debug("Subscribe with mid "+str(mid)+" received.")
 
     @staticmethod
-    def on_connect(mosq, obj, rc):
+    def on_connect(obj, rc):
         if rc == 0:
             logger.debug("Connected successfully.")
 
     @staticmethod
-    def on_mqtt_message(mqtt, obj, msg):
+    def on_mqtt_message(obj, msg):
         """main server sends message on mosquitto"""
         logger.debug("msg from mosquitto: "+str(msg))
         if("commands" == msg.topic): # commands channel is seperate from serial out to allow for "clever" actions
