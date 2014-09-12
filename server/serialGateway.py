@@ -118,7 +118,7 @@ class SerialGateway:
                     except:
                         logger.debug("no serial/arduino on "+device)
             else:
-                self.setSerialPort(serial.Serial(port, self.speed))
+                self.setSerialPort(serial.Serial(self.portFile, self.speed))
 
         print str(self.port)
         if None==self.port:

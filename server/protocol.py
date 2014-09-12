@@ -50,8 +50,13 @@ class Protocol:
         try:
             message=json.loads(jsonString)
             if ("type" not in message):
-                logger.error("invalid message "+message)
-                return False
+                if("error" in message):
+                #TODO who should receive this ?
+                    logger.warn(json.dumps(message)) 
+                    return False
+                else:
+                    logger.error("invalid message "+message)
+                    return False
 
             if("publish" == message["type"]):
                 # 3 cases : services list, service details, real publish
@@ -160,10 +165,6 @@ class Protocol:
                 return False
             elif("request" == message["type"]):
                 logger.debug("request message from a sensorino, don't know what to do")
-                return False
-            elif("error" == message["type"]):
-                #TODO who should receive this ?
-                logger.warn(json.dumps(message)) 
                 return False
             else:
                 logger.error("unhandled message "+message)
