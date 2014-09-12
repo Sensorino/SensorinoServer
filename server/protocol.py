@@ -43,6 +43,11 @@ class Protocol:
         return  ".".join(str(digit) for digit in address)
 
 
+    def get_member(self, msg, name):
+        if isinstance(msg[name], list):
+            return msg[name]
+        return [ msg[name] ]
+
     def treatMessage(self, jsonString):
 
         logger.debug("treat message in proto: "+jsonString)
@@ -64,25 +69,23 @@ class Protocol:
                 #service list from sensorino with address 10
                 # { "from": 10, "to": 0, "type": "publish", "serviceId": [ 0, 1 ] },
 
-                if ( "serviceId" in message and  isinstance(message["serviceId"], list)):
-                    logger.debug("declare sensorino");
-                    sens={
-                        'address'   : message["from"],
-                        'name'      : 'new sensorino',
-                        'description' : 'new sensorino'
-                    }
-                    response, content = http.request( 
-                        baseUrl+"/sensorinos",
-                        'POST',
-                        json.dumps(sens),
-                        headers)
+                service_ids = self.get_member(message, 'serviceId')
+                logger.debug("declare sensorino");
+                sens={
+                    'address'   : message["from"],
+                    'name'      : 'new sensorino',
+                    'description' : 'new sensorino'
+                }
+                response, content = http.request(
+                    baseUrl+"/sensorinos",
+                    'POST',
+                    json.dumps(sens),
+                    headers)
 
-                    if ('200'!=response['status']):
-                        raise Exception("failed to declare sensorino, server answer :"+str(response)+"/"+str(content))
-        
-                        
-                elif("dataType" in message):
-                    
+                if ('200'!=response['status']):
+                    raise Exception("failed to declare sensorino, server answer :"+str(response)+"/"+str(content))
+
+                if "dataType" in message :
                     service={
                         "name": "new service",
                         "instanceId":message['serviceId']
@@ -100,32 +103,20 @@ class Protocol:
                     sens=content
                     channels=[]
 
-                    if ( isinstance(message["dataType"], list)):
-                        # { "dataType": [ "temperature", "temperature", "switch", "switch", ], "count": [ 2, 2 ] } 
-                        position=0
-                        publishers=message['count'][0]
-                        settables=message['count'][1]
-                        chanType="publisher"
-                        for dataType in message["dataType"]:
-                            if position>=publishers:
-                                chanType="settable"
-                            channels.append({                                
-                                "position": position,
-                                "dataType": dataType,
-                                "type": chanType
-                                })
-                            position=position+1
-
-                    else:
-                        # { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
-                        chanType="publisher"
-                        if message['count'][1]!=0:
+                    datatypes = self.get_member(message, "dataType")
+                    position=0
+                    publishers=message['count'][0]
+                    settables=message['count'][1]
+                    chanType="publisher"
+                    for dataType in datatypes:
+                        if position>=publishers:
                             chanType="settable"
                         channels.append({
-                            "position": 0,
-                            "dataType": message["dataType"],
+                            "position": position,
+                            "dataType": dataType,
                             "type": chanType
-                        })
+                            })
+                        position=position+1
 
                     response, content = http.request(
                         baseUrl+"/sensorinos/"+str(message['from'])+"/services/"+str(message['serviceId'])+"/channels",
@@ -165,6 +156,14 @@ class Protocol:
                 return False
             elif("request" == message["type"]):
                 logger.debug("request message from a sensorino, don't know what to do")
+                return False
+            elif("error" == message["type"]):
+                #TODO who should receive this ?
+		#If this follows a request from the UI, must go back to the UI
+		#and be shown to user.  If it follows a "set" message, should
+		#probably either delete the new value from the database tables
+		#or mark it as failed, so it's not shown in charts etc.
+                logger.warn(json.dumps(message)) 
                 return False
             else:
                 logger.error("unhandled message "+message)

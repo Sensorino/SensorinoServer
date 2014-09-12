@@ -154,10 +154,10 @@ class SerialGateway:
     def processMessage(self, msg):
         if self.protocol.treatMessage(msg):
             print "message ok: "+msg
+            return True
         else:
             print "message ko: "+msg
-       
-
+            return False
 
 class FakeSerial:
     
