@@ -201,8 +201,7 @@ if __name__ == '__main__':
     print "engine started"
     app.config['PROPAGATE_EXCEPTIONS'] = True
 
-    print("launch app on local loop, you should proxy/forward port on "+common.Config.getRestServerAddress())
-    app.run(debug=True, port=common.Config.getRestServerPort())
+    app.run(debug=True, host=common.Config.getRestServerAddress(), port=common.Config.getRestServerPort())
     print "app running"
 
 
