@@ -118,7 +118,7 @@ class SerialGateway:
                     except:
                         logger.debug("no serial/arduino on "+device)
             else:
-                self.setSerialPort(serial.Serial(port, self.speed))
+                self.setSerialPort(serial.Serial(self.portFile, self.speed))
 
         print str(self.port)
         if None==self.port:
@@ -154,10 +154,10 @@ class SerialGateway:
     def processMessage(self, msg):
         if self.protocol.treatMessage(msg):
             print "message ok: "+msg
+            return True
         else:
             print "message ko: "+msg
-       
-
+            return False
 
 class FakeSerial:
     
