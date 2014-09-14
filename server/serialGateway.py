@@ -86,6 +86,11 @@ class SerialGateway:
                 gateway.writeOnSerial(json.dumps(msg.payload))
             else:
                 gateway.writeOnSerial(msg.payload)
+        elif ("serialInEmulator" == msg.topic):
+            print(str(msg))
+            print(str(msg.topic))
+            print(str(msg.payload))
+            gateway.processMessage(msg.payload)
         else:
             logger.warn("unknown mqtt channel")
 
@@ -135,6 +140,7 @@ class SerialGateway:
         time.sleep(1)
         self.mqtt.mqttc.subscribe("commands", 0)
         self.mqtt.mqttc.subscribe("serialOut", 0)
+        self.mqtt.mqttc.subscribe("serialInEmulator", 0)
 
 
     def start(self):
@@ -153,10 +159,10 @@ class SerialGateway:
 
     def processMessage(self, msg):
         if self.protocol.treatMessage(msg):
-            print "message ok: "+msg
+            print "message processed ok: "+msg
             return True
         else:
-            print "message ko: "+msg
+            print "message failed to process: "+msg
             return False
 
 class FakeSerial:
