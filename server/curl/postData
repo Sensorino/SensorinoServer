@@ -1,2 +1,2 @@
-curl -X POST -H "Content-Type: application/json" -d '{"data":"42.01"}' http://127.0.0.1/sensorinos/1/dataServices/1/data
+curl -X POST -H "Content-Type: application/json" -d '{"data":"42.01"}' http://127.0.0.1/sensorinos/1/service/channels/1
 
