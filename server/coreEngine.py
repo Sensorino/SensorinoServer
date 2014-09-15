@@ -9,6 +9,8 @@ import common
 import json
 import mqttThread
 from errors import *
+import singleton
+import traceback
 
 # create logger with 'spam_application'
 logger = logging.getLogger('sensorino_coreEngine')
@@ -30,6 +32,8 @@ logger.addHandler(ch)
 
 
 class Core:
+    __metaclass__ = singleton.Singleton
+
     def __init__(self):
         self._sensorinosLoaded=False
         self.sensorinos=[]
@@ -189,38 +193,37 @@ class Core:
         return True
 
 
-    def _createMqttClient(self):
-        """confire mqtt client and create thread for it"""
+    def _launchMqttClient(self):
+
+        if None!=self.mqtt:
+            pass
+
+        """configure mqtt client and create thread for it"""
         def mqtt_on_connect(mosq, obj, rc):
             mosq.subscribe("sensorino", 0)
-
         def mqtt_on_message(mosq, obj, msg):
-            print(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
-
+            logger.debug(msg.topic+" "+str(msg.qos)+" "+str(msg.payload))
         def mqtt_on_publish(mosq, obj, mid):
-            print("mid: "+str(mid))
-
+            pass
         def mqtt_on_subscribe(mosq, obj, mid, granted_qos):
-            print("Subscribed: "+str(mid)+" "+str(granted_qos))
-
+            pass
         def mqtt_on_log(mosq, obj, level, string):
-            print(string)
+            logger.debug("mqtt log: "+string)
 
-        mqtt=mqttThread.MqttThread()
+        self.mqtt=mqttThread.MqttThread()
 
-        mqtt.mqttc.on_message = mqtt_on_message
-        mqtt.mqttc.on_connect = mqtt_on_connect
-        mqtt.mqttc.on_publish = mqtt_on_publish
-        mqtt.mqttc.on_subscribe = mqtt_on_subscribe
+        self.mqtt.mqttc.on_message = mqtt_on_message
+        self.mqtt.mqttc.on_connect = mqtt_on_connect
+        self.mqtt.mqttc.on_publish = mqtt_on_publish
+        self.mqtt.mqttc.on_subscribe = mqtt_on_subscribe
         # Uncomment to enable debug messages
         #mqtt.mqttc.on_log = on_log
         
-        self.mqtt = mqtt
-        return mqtt
+        return self.mqtt
 
 
     def start(self):
         self.loadSensorinos()
-        self._createMqttClient().start()
+        self._launchMqttClient()
 
 
