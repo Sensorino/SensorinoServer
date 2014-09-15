@@ -3,6 +3,7 @@
 import protocol
 import mqttThread
 import common
+import singleton
 
 import datetime
 import json
@@ -41,12 +42,12 @@ ch.setFormatter(formatter)
 # add ch to logger
 logger.addHandler(ch)
 
-
-
 gateway=None
 
 
 class SerialGateway:
+
+    __metaclass__=singleton.Singleton
 
     linuxPossibleSerialPorts=['/dev/ttyACM0', '/dev/ttyACM1', '/dev/ttyACM2',
     '/dev/ttyUSB0','/dev/ttyUSB1','/dev/ttyUSB2','/dev/ttyUSB3',
@@ -123,7 +124,11 @@ class SerialGateway:
                     except:
                         logger.debug("no serial/arduino on "+device)
             else:
-                self.setSerialPort(serial.Serial(self.portFile, self.speed))
+                if "dummy" == self.portFile:
+                    self.port="dummy"
+                    logger.debug("not connecting to serial, dummy instance")
+                else:
+                    self.setSerialPort(serial.Serial(self.portFile, self.speed))
 
         print str(self.port)
         if None==self.port:
@@ -147,13 +152,16 @@ class SerialGateway:
         self.startMqtt()
         self.startSerial()
         while True:
-            msg=self.port.readline()
-            self.mqtt.mqttc.publish("serialIn",  msg)
-            try:
-                if not self.processMessage(msg):
-                    logger.debug("protocol did not treat message : "+msg)
-            except:
-                logger.warn("failure !")
+            if "dummy"==self.port:
+                time.sleep(1)
+            else:
+                msg=self.port.readline()
+                self.mqtt.mqttc.publish("serialIn",  msg)
+                try:
+                    if not self.processMessage(msg):
+                        logger.debug("protocol did not treat message : "+msg)
+                except:
+                    logger.warn("failure !")
                 
 
 
@@ -164,47 +172,6 @@ class SerialGateway:
         else:
             print "message failed to process: "+msg
             return False
-
-class FakeSerial:
-    
-    currentMessage=0   
-    messages=[
-
-        ## publish
-
-        #service list from sensorino with address 10
-        { "from": 10, "to": 0, "type": "publish", "serviceId": [ 0, 1 ] },
-        # service dataType / description from a service 1 on sensorino with address 10
-        { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "dataType": "switch", "count": [ 0, 1 ] },
-        # publish from a service 1 of type switch on sensorino with address 10
-        { "from": 10, "to": 0, "type": "publish", "serviceId": 1, "switch": False },
-
-        ## request 
-
-        # base ask service list to service manager service on sensorino with address 10        
-        { "from": 0, "to": 10, "type": "request", "serviceId": 0 },
-        # base ask service description of service 1 on sensorino with address 10
-        { "from": 0, "to": 10, "type": "request", "serviceId": 1, "dataType": "dataType" },
-        # base ask service 1 on sensorino with address 10 to publish
-        { "from": 0, "to": 10, "type": "request", "serviceId": 1, "dataType": "switch" },
-
-        ## set
-        # base set service 1 on sensorino with address 10 switch state to True
-        { "from": 0, "to": 10, "type": "set", "serviceId": 1, "switch": True }
-
-    ]
-
-
-    def __init__(self):
-        pass
-
-    def readline(self):
-        FakeSerial.currentMessage=FakeSerial.currentMessage+1
-        if FakeSerial.currentMessage==len(FakeSerial.messages)+1:
-            sys.exit()
-        print "read message :"+FakeSerial.messages[FakeSerial.currentMessage-1]
-        return FakeSerial.messages[FakeSerial.currentMessage-1]
-        
 
 
 
@@ -218,8 +185,4 @@ if __name__ == '__main__':
         speed=int(sys.argv[2])
 
     gateway=SerialGateway(port, speed)
-
-    if "debug"==port:
-        gateway.setSerialPort(FakeSerial())        
-    
     gateway.start()

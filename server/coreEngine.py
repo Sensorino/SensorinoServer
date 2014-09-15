@@ -106,7 +106,7 @@ class Core:
     def createService(self, saddress, name, instanceId ):
         s = self.findSensorino(saddress=saddress)
         service=sensorino.Service(name, s.address, instanceId)
-        if (False==s.registerService(service)):
+        if not s.registerService(service):
             raise FailToAddServiceError("register failed")
         status=service.save()
         return service

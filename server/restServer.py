@@ -20,14 +20,13 @@ from errors import *
 app = Flask(__name__)
 api = restful.Api(app)
 
-coreEngine = coreEngine.Core()
-
+cEngine = None
 
 class RestSensorinoList(restful.Resource):
     """ Handle sensorinos list and creation"""
     def get(self):
         sensorinos=[]
-        for s in coreEngine.getSensorinos():
+        for s in cEngine.getSensorinos():
             sensorinos.append(s.toData())
         return sensorinos
 
@@ -38,7 +37,7 @@ class RestSensorinoList(restful.Resource):
         rparse.add_argument('description', type=str, required=True, help="Please give a brief description for your sensorino", location="json")
         args = rparse.parse_args()
         try:
-            return coreEngine.createSensorino(args['name'],  args['address'], args['description']).address
+            return cEngine.createSensorino(args['name'],  args['address'], args['description']).address
         except Exception as e:
             return e.message, 500
 
@@ -47,7 +46,7 @@ class RestSensorino(restful.Resource):
     """ Handle sensorino details, update and delete"""
     def get(self, address):
         try:
-            return coreEngine.findSensorino(saddress=address).toData()
+            return cEngine.findSensorino(saddress=address).toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
 
@@ -58,7 +57,7 @@ class RestSensorino(restful.Resource):
 
         args = rparse.parse_args()
         try:
-            sens=coreEngine.findSensorino(saddress=address)
+            sens=cEngine.findSensorino(saddress=address)
             sens.name=args['name']
             sens.description=args['description']
 
@@ -69,7 +68,7 @@ class RestSensorino(restful.Resource):
 
 
     def delete(self, address):
-        return coreEngine.delSensorino(address)
+        return cEngine.delSensorino(address)
 
 
 
@@ -77,7 +76,7 @@ class ServicesBySensorino(restful.Resource):
     """ List and create services inside a sensorino"""
     def get(self, address):
         services=[]
-        for service in coreEngine.getServicesBySensorino(saddress=address):
+        for service in cEngine.getServicesBySensorino(saddress=address):
             services.append(service.toData())
         return services
 
@@ -88,7 +87,7 @@ class ServicesBySensorino(restful.Resource):
         args =rparse.parse_args()
         
         try:
-            service=coreEngine.createService( address, args['name'], args['instanceId'])
+            service=cEngine.createService( address, args['name'], args['instanceId'])
             return service.toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino "+address)
@@ -99,7 +98,7 @@ class ServiceBySensorino(restful.Resource):
     """ Handle service details, update and delete"""
     def get(self, address, instanceId):
         try:
-            return coreEngine.findSensorino(saddress=address).getService(instanceId).toData()
+            return cEngine.findSensorino(saddress=address).getService(instanceId).toData()
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -107,7 +106,7 @@ class ServiceBySensorino(restful.Resource):
 
     def delete(self, address, instanceId):
         try:
-            coreEngine.deleteService(address, instanceId)
+            cEngine.deleteService(address, instanceId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
 
@@ -118,7 +117,7 @@ class ChannelsByService(restful.Resource):
     def get(self, address, instanceId):
         try:
             sensorinoId=int(address)
-            return coreEngine.findSensorino(saddress=address).getService(instanceId).channels
+            return cEngine.findSensorino(saddress=address).getService(instanceId).channels
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -130,7 +129,7 @@ class ChannelsByService(restful.Resource):
         args =rparse.parse_args()
         try: 
             sensorinoId=int(address)
-            return coreEngine.findSensorino(saddress=address).getService(instanceId).setChannels(args["channels"])
+            return cEngine.findSensorino(saddress=address).getService(instanceId).setChannels(args["channels"])
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -141,7 +140,7 @@ class ChannelsByService(restful.Resource):
         rparse.add_argument('data', type=dict, required=True, help="are you loging data ?", location="json")
         args =rparse.parse_args()
         try: 
-            coreEngine.publish(address, instanceId, args['data'])
+            cEngine.publish(address, instanceId, args['data'])
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -153,7 +152,7 @@ class ChannelsByService(restful.Resource):
 class Channel(restful.Resource):
     def delete(self, address, instanceId, channelId):
         try:
-            coreEngine.deleteChannel(self, address, instanceId, channelId)
+            cEngine.deleteChannel(self, address, instanceId, channelId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
 
@@ -163,7 +162,7 @@ class Channel(restful.Resource):
         rparse.add_argument('data', type=dict, required=True, help="are you loging data ?", location="json")
         args =rparse.parse_args()
         try: 
-            coreEngine.publish(address, instanceId, args['data'], channelId)
+            cEngine.publish(address, instanceId, args['data'], channelId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -173,7 +172,7 @@ class Channel(restful.Resource):
 class ChannelLog(restful.Resource):
     def get(self, address, instanceId, channelId):
         try:
-            return coreEngine.getLogs( address, instanceId, channelId)
+            return cEngine.getLogs( address, instanceId, channelId)
         except SensorinoNotFoundError:
             abort(404, message="no such sensorino")
         except ServiceNotFoundError:
@@ -196,12 +195,14 @@ api.add_resource(ChannelLog, '/sensorinos/<string:address>/services/<int:instanc
 
 
 if __name__ == '__main__':
-    print("sensorino server m0.2")
-    coreEngine.start()
-    print "engine started"
+    print("sensorino server m0.3")
+    cEngine = coreEngine.Core()
+    cEngine.start()
     app.config['PROPAGATE_EXCEPTIONS'] = True
 
-    app.run(debug=True, host=common.Config.getRestServerAddress(), port=common.Config.getRestServerPort())
+    # for some reason autoreloader is confused as fuck when using threads, have to disable it
+    # http://blog.davidvassallo.me/2013/10/23/nugget-post-python-flask-framework-and-multiprocessing/
+    app.run(debug=True, host=common.Config.getRestServerAddress(), port=common.Config.getRestServerPort(), use_reloader=False)
     print "app running"
 
 
