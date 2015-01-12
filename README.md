@@ -1,3 +1,8 @@
+Project is abandoned
+====================
+
+NOTE: this project was declared abandoned in its early development stage and is left in a non-functional state.  See https://github.com/Sensorino/sensorino-smarthome for a working Server implementation that follows a different approach.
+
 SensorinoServer
 ===============
 
